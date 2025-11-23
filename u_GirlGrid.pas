@@ -11,8 +11,6 @@ type
 
   TGirlGridMouseDownEvent = procedure(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TagString: string) of object;
-  TGirlGridMouseMoveEvent = procedure(Sender: TObject;
-    Shift: TShiftState; TagString: string) of object;
 
   TGirlGrid = class
   private
@@ -31,21 +29,22 @@ type
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    procedure InternalMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    function GetTileByText(Text: String): TPlane;
+    procedure InternalImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
+    function GetTileByText(Text: String): TPlane;
     procedure RebuildGrid;
 
   public
     FNames: TStringList;
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
-    OnGirlGridMouseMove: TGirlGridMouseMoveEvent;
+    OnGirlGridImgDeleteMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
       TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
     destructor Destroy; override;
-
     procedure SetBasePosition(BaseX, BaseY: Single);
+
     procedure AddGirl(const GirlName: string);
     procedure DeleteGirl(const GirlName: string);
   end;
@@ -59,6 +58,7 @@ implementation
 constructor TGirlGrid.Create(AParent: TViewport3D;
   TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
 begin
+
   inherited Create;
   FViewport := AParent;
 
@@ -121,7 +121,20 @@ var
   col, row, i: Integer;
   Plane: TPlane;
   Txt: TText3D;
+  ImgBitmap: TBitmap;
+  ImgMat: TTextureMaterialSource;
+  BaseBitmap: TBitmap;
+  ImgPlane: TPlane;
 begin
+  BaseBitmap := TBitmap.Create(64,64);
+  MakeRoundedBitmap(BaseBitmap, TAlphaColorRec.Crimson, '-');
+  // Crea bitmap e materiale indipendente per l'icona -
+  ImgBitmap := TBitmap.Create(64,64);
+  ImgBitmap.Assign(BaseBitmap); // copia la bitmap di base rossa OFF
+  ImgMat := TTextureMaterialSource.Create(FViewport);
+  ImgMat.Texture.Assign(ImgBitmap);
+  ImgBitmap.Free; // <--- evitare memory leak
+
   // Dispose tiles esistenti
   for col := 0 to FCols - 1 do
     for row := 0 to FRows - 1 do
@@ -148,7 +161,6 @@ begin
 
       Plane.HitTest := True;
       Plane.OnMouseDown := InternalMouseDown;
-      Plane.OnMouseMove := InternalMouseMove;
 
       Plane.Tag := i;
       Plane.TagString := Uppercase(FNames[i]);
@@ -172,6 +184,24 @@ begin
       Txt.Position.Z := 0.05;
       Txt.RotationAngle.X := -180;
       Txt.HitTest := False;
+
+
+      ImgPlane := TPlane.Create(FViewport);
+      ImgPlane.Parent := Plane;
+      ImgPlane.Width := FTileWidth * 0.10;
+      ImgPlane.Height := FTileHeight * 0.50;
+      ImgPlane.Position.X := (Plane.Width / 2) - 0.2;
+      ImgPlane.Position.Y := (Plane.Height / 2) - 0.2 ;
+      ImgPlane.Position.Z := 0.05;
+      ImgPlane.MaterialSource := ImgMat;
+      ImgPlane.TagString := Uppercase(FNames[i]);
+      ImgPlane.Tag := Plane.Tag;
+      ImgPlane.OnMouseDown := InternalImgDeleteMouseDown;
+      ImgPlane.HitTest := True;
+      ImgPlane.RotationAngle.X := 180;
+      ImgPlane.Cursor := crHandPoint;
+
+
 
       Inc(i);
     end;
@@ -202,11 +232,13 @@ begin
     OnGirlGridMouseDown(Sender, Button, Shift, TPlane(Sender).TagString);
 end;
 
-procedure TGirlGrid.InternalMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+procedure TGirlGrid.InternalImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
-  if (Sender is TPlane) and Assigned(OnGirlGridMouseMove) then
-    OnGirlGridMouseMove(Sender, Shift, TPlane(Sender).TagString);
+  if (Sender is TPlane) and Assigned(OnGirlGridImgDeleteMouseDown) then
+    OnGirlGridImgDeleteMouseDown(Sender, Button, Shift, TPlane(Sender).TagString);
 end;
+
 
 procedure TGirlGrid.SetBasePosition(BaseX, BaseY: Single);
 begin

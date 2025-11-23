@@ -35,7 +35,8 @@ type
     procedure OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
     procedure GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
-    procedure GirlGridMouseMove(Sender: TObject; Shift: TShiftState; Tag: string);
+    procedure GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; Tag: string);
     // Menu click
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
@@ -221,7 +222,7 @@ begin
     FilesList.Free;
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
-  GirlGrid.OnGirlGridMouseMove := GirlGridMouseMove;
+  GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
   GirlGrid.SetBasePosition(9,-4);
 
 end;
@@ -279,10 +280,12 @@ begin
   // puoi aggiungere logica click 3D se serve
   Caption:= Tag;
 end;
-procedure TForm1.GirlGridMouseMove(Sender: TObject; Shift: TShiftState; Tag: string);
+procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; Tag: string);
 begin
-  // puoi aggiungere logica click 3D se serve
-  TPlane(Sender).Cursor := crHandPoint;
+  if FileExists (dirSaves + Tag + '.txt' ) then
+    ShowyesNoOverlay ( 'Elimino dalla lista ' + Uppercase(Tag) + '?');
+
 end;
 
 procedure TForm1.AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
