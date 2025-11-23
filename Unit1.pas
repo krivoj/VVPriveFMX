@@ -1,5 +1,5 @@
 ﻿unit Unit1;
-
+{$R Images.res}
 interface
 
 uses
@@ -37,6 +37,9 @@ type
     Shift: TShiftState; Tag: string);
     procedure GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
+    procedure GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; Tag: string);
+
     // Menu click
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
@@ -223,6 +226,7 @@ begin
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
+  GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridImgInfoMouseDown;
   GirlGrid.SetBasePosition(9,-4);
 
 end;
@@ -285,6 +289,13 @@ procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButto
 begin
   if FileExists (dirSaves + Tag + '.txt' ) then
     ShowyesNoOverlay ( 'Elimino dalla lista ' + Uppercase(Tag) + '?');
+
+end;
+procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; Tag: string);
+begin
+  if FileExists (dirSaves + Tag + '.txt' ) then
+    ShowyesNoOverlay ( 'Mostro info ' + Uppercase(Tag) + '?');
 
 end;
 

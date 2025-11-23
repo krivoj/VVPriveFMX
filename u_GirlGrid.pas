@@ -31,6 +31,8 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
     procedure InternalImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+    procedure InternalImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     function GetTileByText(Text: String): TPlane;
     procedure RebuildGrid;
@@ -39,6 +41,7 @@ type
     FNames: TStringList;
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
     OnGirlGridImgDeleteMouseDown: TGirlGridMouseDownEvent;
+    OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
       TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
@@ -122,18 +125,18 @@ var
   Plane: TPlane;
   Txt: TText3D;
   ImgBitmap: TBitmap;
-  ImgMat: TTextureMaterialSource;
-  BaseBitmap: TBitmap;
-  ImgPlane: TPlane;
+  ImgMatDelete,ImgMatInfo: TTextureMaterialSource;
+  ImgPlaneDelete, ImgPlaneInfo: TPlane;
+  RS: TResourceStream;
 begin
-  BaseBitmap := TBitmap.Create(64,64);
-  MakeRoundedBitmap(BaseBitmap, TAlphaColorRec.Crimson, '-');
-  // Crea bitmap e materiale indipendente per l'icona -
-  ImgBitmap := TBitmap.Create(64,64);
-  ImgBitmap.Assign(BaseBitmap); // copia la bitmap di base rossa OFF
-  ImgMat := TTextureMaterialSource.Create(FViewport);
-  ImgMat.Texture.Assign(ImgBitmap);
-  ImgBitmap.Free; // <--- evitare memory leak
+  RS := TResourceStream.Create(HInstance, 'PNGDELETE', RT_RCDATA);
+  ImgMatDelete := TTextureMaterialSource.Create(FViewport);
+  ImgMatDelete.Texture.LoadFromStream(RS);
+  RS.Free;
+  RS := TResourceStream.Create(HInstance, 'PNGINFO', RT_RCDATA);
+  ImgMatInfo := TTextureMaterialSource.Create(FViewport);
+  ImgMatInfo.Texture.LoadFromStream(RS);
+  RS.Free;
 
   // Dispose tiles esistenti
   for col := 0 to FCols - 1 do
@@ -164,6 +167,8 @@ begin
 
       Plane.Tag := i;
       Plane.TagString := Uppercase(FNames[i]);
+      Plane.Cursor := crHandPoint;
+
       FTiles[col,row] := Plane;
 
       Txt := TText3D.Create(Plane);
@@ -186,21 +191,35 @@ begin
       Txt.HitTest := False;
 
 
-      ImgPlane := TPlane.Create(FViewport);
-      ImgPlane.Parent := Plane;
-      ImgPlane.Width := FTileWidth * 0.10;
-      ImgPlane.Height := FTileHeight * 0.50;
-      ImgPlane.Position.X := (Plane.Width / 2) - 0.2;
-      ImgPlane.Position.Y := (Plane.Height / 2) - 0.2 ;
-      ImgPlane.Position.Z := 0.05;
-      ImgPlane.MaterialSource := ImgMat;
-      ImgPlane.TagString := Uppercase(FNames[i]);
-      ImgPlane.Tag := Plane.Tag;
-      ImgPlane.OnMouseDown := InternalImgDeleteMouseDown;
-      ImgPlane.HitTest := True;
-      ImgPlane.RotationAngle.X := 180;
-      ImgPlane.Cursor := crHandPoint;
+      ImgPlaneDelete := TPlane.Create(FViewport);
+      ImgPlaneDelete.Parent := Plane;
+      ImgPlaneDelete.Width := FTileWidth * 0.15;
+      ImgPlaneDelete.Height := FTileHeight * 0.60;
+      ImgPlaneDelete.Position.X := (Plane.Width / 2) - 0.25;
+      ImgPlaneDelete.Position.Y := (Plane.Height / 2) - 0.2 ;
+      ImgPlaneDelete.Position.Z := 0.05;
+      ImgPlaneDelete.MaterialSource := ImgMatdelete;
+      ImgPlaneDelete.TagString := Uppercase(FNames[i]);
+      ImgPlaneDelete.Tag := Plane.Tag;
+      ImgPlaneDelete.OnMouseDown := InternalImgDeleteMouseDown;
+      ImgPlaneDelete.HitTest := True;
+      ImgPlaneDelete.RotationAngle.X := 180;
+      ImgPlaneDelete.Cursor := crHandPoint;
 
+      ImgPlaneInfo := TPlane.Create(FViewport);
+      ImgPlaneInfo.Parent := Plane;
+      ImgPlaneInfo.Width := FTileWidth * 0.15;
+      ImgPlaneInfo.Height := FTileHeight * 0.60;
+      ImgPlaneInfo.Position.X := -(Plane.Width / 2) + 0.2;
+      ImgPlaneInfo.Position.Y := (Plane.Height / 2) - 0.2 ;
+      ImgPlaneInfo.Position.Z := 0.05;
+      ImgPlaneInfo.MaterialSource := ImgMatInfo;
+      ImgPlaneInfo.TagString := Uppercase(FNames[i]);
+      ImgPlaneInfo.Tag := Plane.Tag;
+      ImgPlaneInfo.OnMouseDown := InternalImgInfoMouseDown;
+      ImgPlaneInfo.HitTest := True;
+      ImgPlaneInfo.RotationAngle.X := 180;
+      ImgPlaneInfo.Cursor := crHandPoint;
 
 
       Inc(i);
@@ -237,6 +256,12 @@ procedure TGirlGrid.InternalImgDeleteMouseDown(Sender: TObject; Button: TMouseBu
 begin
   if (Sender is TPlane) and Assigned(OnGirlGridImgDeleteMouseDown) then
     OnGirlGridImgDeleteMouseDown(Sender, Button, Shift, TPlane(Sender).TagString);
+end;
+procedure TGirlGrid.InternalImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+begin
+  if (Sender is TPlane) and Assigned(OnGirlGridImgInfoMouseDown) then
+    OnGirlGridImgInfoMouseDown(Sender, Button, Shift, TPlane(Sender).TagString);
 end;
 
 

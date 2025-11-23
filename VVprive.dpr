@@ -1,5 +1,7 @@
 program VVprive;
 
+{$R 'images.res' 'images.rc'}
+
 uses
   System.StartUpCopy,
   FMX.Forms,
