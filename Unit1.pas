@@ -101,7 +101,7 @@ begin
   Viewport3D1.Visible := True;
 
   // Crea grid privè 6x4
-  PrivGrid := TPrivGrid.Create(Viewport3D1,  6, 4, 2.5,3,0.1,0.1);
+  PrivGrid := TPrivGrid.Create(Viewport3D1,  6, 4, 2.5,3,0.05,0.05);
   PrivGrid.SetBasePosition(-9,-4.5);
   PrivGrid.OnTileMouseDown := TileMouseDown;
   PrivGrid.OnImgMouseDown := ImgMouseDown;

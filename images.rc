@@ -1,3 +1,10 @@
 PNGDELETE  RCDATA  "delete.png"
 PNGINFO  RCDATA  "info.png"
 PNGADD RCDATA  "add.png"
+PNGBUTTONGIRL RCDATA  "buttongirl.png"
+PNGCOLORON RCDATA  "coloron.png"
+PNGCOLOROFF RCDATA  "coloroff.png"
+PNGCOLORALARM RCDATA  "coloralarm.png"
+PNGSWITCH_ON RCDATA  "switch_on.png"
+PNGSWITCH_OFF RCDATA  "switch_off.png"
+

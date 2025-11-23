@@ -22,6 +22,7 @@ object Form1: TForm1
   object Viewport3D1: TViewport3D
     Align = Client
     Camera = Camera1
+    Color = claDarkgray
     Size.Width = 1208.000000000000000000
     Size.Height = 726.000000000000000000
     Size.PlatformDefault = False

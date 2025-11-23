@@ -21,7 +21,6 @@ type
     FRoot: TDummy;
     FTiles: array of array of TPlane;
 
-    Tex,TexHighLight: TBitmap;
     MatText: TColorMaterialSource;
 
 
@@ -53,7 +52,6 @@ type
     procedure DeleteGirl(const GirlName: string);
   end;
 
-procedure MakeRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor; const Text: string = '');
 
 implementation
 
@@ -61,6 +59,8 @@ implementation
 
 constructor TGirlGrid.Create(AParent: TViewport3D;
   TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
+var
+  RS : TResourceStream;
 begin
 
   inherited Create;
@@ -77,17 +77,15 @@ begin
   FRoot := TDummy.Create(FViewport);
   FRoot.Parent := FViewport;
 
-  Tex := TBitmap.Create;
-  CreateRoundedBitmap(Tex, TAlphaColors.Gray);
-
-  TexHighLight := TBitmap.Create;
-  CreateRoundedBitmap(TexHighLight, TAlphaColors.Orange);
-
+  RS := TResourceStream.Create(HInstance, 'PNGBUTTONGIRL', RT_RCDATA);
   Mat := TTextureMaterialSource.Create(FViewport);
-  Mat.Texture.Assign(Tex);
+  Mat.Texture.LoadFromStream(RS);
+  RS.Free;
 
+  RS := TResourceStream.Create(HInstance, 'PNGBUTTONGIRL', RT_RCDATA);
   MatHighLight := TTextureMaterialSource.Create(FViewport);
-  MatHighLight.Texture.Assign(TexHighLight);
+  MatHighLight.Texture.LoadFromStream(RS);
+  RS.Free;
 
 
   MatText := TColorMaterialSource.Create(FViewport);
@@ -120,8 +118,8 @@ begin
 
   FNames.Free;
 
-  Tex.Free;
   Mat.Free;
+  MatHighLight.Free;
   MatText.Free;
   FRoot.DisposeOf;
   inherited;
@@ -315,38 +313,6 @@ begin
       end;
 end;
 
-procedure MakeRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor; const Text: string = '');
-var
-  R: TRectF;
-  Radius: Single;
-begin
-  ABitmap.SetSize(128,128);
-  ABitmap.Clear(0);
-  Radius := ABitmap.Height * 0.4;
-  R := RectF(0,0,ABitmap.Width,ABitmap.Height);
-
-  ABitmap.Canvas.BeginScene;
-  try
-    ABitmap.Canvas.Fill.Kind := TBrushKind.Solid;
-    ABitmap.Canvas.Fill.Color := AColor;
-    ABitmap.Canvas.FillRect(R, Radius, Radius, AllCorners, 1);
-
-    ABitmap.Canvas.Stroke.Kind := TBrushKind.Solid;
-    ABitmap.Canvas.Stroke.Thickness := 2;
-    ABitmap.Canvas.Stroke.Color := TAlphaColorRec.Black;
-    ABitmap.Canvas.DrawRect(R, Radius, Radius, AllCorners, 1);
-
-    if Text <> '' then
-    begin
-      ABitmap.Canvas.Fill.Color := TAlphaColorRec.White;
-      ABitmap.Canvas.Font.Size := 40;
-      ABitmap.Canvas.Font.Style := [TFontStyle.fsBold];
-      ABitmap.Canvas.FillText(R, Text, False, 1.0, [], TTextAlign.Center, TTextAlign.Center);
-    end;
-  finally
-    ABitmap.Canvas.EndScene;
-  end;
-end;
 
 end.
 

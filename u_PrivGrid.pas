@@ -93,20 +93,21 @@ begin
   RS.Free;
 
 
-  // Creazione texture arrotondate principali
-  TexOff := TBitmap.Create;
-  TexOn := TBitmap.Create;
-  TexAlarm := TBitmap.Create;
-  CreateRoundedBitmap(TexOff, TAlphaColors.Gray);
-  CreateRoundedBitmap(TexOn, TAlphaColors.Limegreen);
-  CreateRoundedBitmap(TexAlarm, TAlphaColors.Crimson);
-
-  MatOff := TTextureMaterialSource.Create(FViewport);
-  MatOff.Texture.Assign(TexOff);
+  RS := TResourceStream.Create(HInstance, 'PNGCOLORON', RT_RCDATA);
   MatOn := TTextureMaterialSource.Create(FViewport);
-  MatOn.Texture.Assign(TexOn);
+  MatOn.Texture.LoadFromStream(RS);
+  RS.Free;
+
+  RS := TResourceStream.Create(HInstance, 'PNGCOLOROFF', RT_RCDATA);
+  MatOff := TTextureMaterialSource.Create(FViewport);
+  MatOff.Texture.LoadFromStream(RS);
+  RS.Free;
+
+  RS := TResourceStream.Create(HInstance, 'PNGCOLORALARM', RT_RCDATA);
   MatAlarm := TTextureMaterialSource.Create(FViewport);
-  MatAlarm.Texture.Assign(TexAlarm);
+  MatAlarm.Texture.LoadFromStream(RS);
+  RS.Free;
+
 
   MatText := TColorMaterialSource.Create(FViewport);
   MatText.Color := TAlphaColorRec.White;
