@@ -8,7 +8,7 @@ uses
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources,
-  FMX.Types, System.Generics.Collections, Math;
+  FMX.Types, System.Generics.Collections, Math, FMX.Effects;
 
 type
   TForm1 = class(TForm)
@@ -31,6 +31,8 @@ type
     procedure TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
     procedure ImgMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; TileTag: Integer);
+    procedure ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
     procedure OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
     procedure GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
@@ -68,11 +70,9 @@ var
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
   TxtAddGirl : TText3D;
-  PlaneDeleteGirl: TPlane;
-  TxtDeleteGirl : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
 
-  MBorder,MBorder2: TPlane;
+  MBorder: TPlane;
   BorderMat: TColorMaterialSource;
 
   FAddGirlOverlay : TLayout;
@@ -101,10 +101,11 @@ begin
   Viewport3D1.Visible := True;
 
   // Crea grid privè 6x4
-  PrivGrid := TPrivGrid.Create(Viewport3D1,  6, 4, 2.5,2.5,0.1,0.1);
-  PrivGrid.SetBasePosition(-9,-3);
+  PrivGrid := TPrivGrid.Create(Viewport3D1,  6, 4, 2.5,3,0.1,0.1);
+  PrivGrid.SetBasePosition(-9,-4.5);
   PrivGrid.OnTileMouseDown := TileMouseDown;
   PrivGrid.OnImgMouseDown := ImgMouseDown;
+  PrivGrid.OnImgAddMouseDown := ImgAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
   LoadGirlsList; // GirlGrid
@@ -153,54 +154,13 @@ begin
 
   MBorder := TPlane.Create(Viewport3D1);
   MBorder.Parent := Viewport3D1;
-  MBorder.Width := PlaneAddGirl.Width + 0.12;    // bordo esterno
-  MBorder.Height := PlaneAddGirl.Height + 0.12;
+  MBorder.Width := PlaneAddGirl.Width + 0.08;    // bordo esterno
+  MBorder.Height := PlaneAddGirl.Height + 0.08;
   MBorder.Position.X := PlaneAddGirl.Position.X;
   MBorder.Position.Y := PlaneAddGirl.Position.Y;
   MBorder.Position.Z := PlaneAddGirl.Position.Z - 0.02; // dietro al pulsante
   MBorder.MaterialSource := BorderMat;
   MBorder.HitTest := False; // non deve prendere i click
-
-  PlaneDeleteGirl := TPlane.Create(Viewport3D1);
-  PlaneDeleteGirl.Parent := Viewport3D1;
-  PlaneDeleteGirl.Width := 2.2;
-  PlaneDeleteGirl.Height := 0.5;
-  PlaneDeleteGirl.MaterialSource := MatMenu;
-  PlaneDeleteGirl.Position.X := 9;
-  PlaneDeleteGirl.Position.Y := -5.6;
-  PlaneDeleteGirl.HitTest := True;
-  PlaneDeleteGirl.OnMouseDown := DeleteGirlMouseDown;
-  PlaneDeleteGirl.Cursor := CrHandPoint;
-
-  // Testo identificativo della cella
-  TxtDeleteGirl := TText3D.Create(PlaneDeleteGirl);
-  TxtDeleteGirl.Parent := PlaneDeleteGirl;
-  TxtDeleteGirl.Font.Size := 10;
-  TxtDeleteGirl.WordWrap := False;
-  TxtDeleteGirl.MaterialSource := MatMenuText2;
-  TxtDeleteGirl.Text := 'RIMUOVI RAGAZZA';
-  TxtDeleteGirl.HorzTextAlign := TTextAlign.Center;
-  TxtDeleteGirl.VertTextAlign := TTextAlign.Center;
-// Posizione al centro del plane
-  TxtDeleteGirl.Position.X := 0;
-  TxtDeleteGirl.Position.Y := 0;
-  TxtDeleteGirl.Depth := 0.00;
-  TxtDeleteGirl.Scale.X := 0.70;
-  TxtDeleteGirl.Scale.Y := 0.15;
-  //TxtDeleteGirl.Stretch := false;
-  TxtDeleteGirl.Position.Z := 0.05;
-  TxtDeleteGirl.RotationAngle.X := -180;
-  TxtDeleteGirl.HitTest := false;
-
-  MBorder2 := TPlane.Create(Viewport3D1);
-  MBorder2.Parent := Viewport3D1;
-  MBorder2.Width := PlaneDeleteGirl.Width + 0.12;    // bordo esterno
-  MBorder2.Height := PlaneDeleteGirl.Height + 0.12;
-  MBorder2.Position.X := PlaneDeleteGirl.Position.X;
-  MBorder2.Position.Y := PlaneDeleteGirl.Position.Y;
-  MBorder2.Position.Z := PlaneDeleteGirl.Position.Z - 0.02; // dietro al pulsante
-  MBorder2.MaterialSource := BorderMat;
-  MBorder2.HitTest := False; // non deve prendere i click
 
 
   TimerMain := TTimer.Create(Self);
@@ -272,6 +232,12 @@ procedure TForm1.ImgMouseDown(Sender: TObject; Button: TMouseButton;
 begin
   // puoi aggiungere logica click 3D se serve
   Caption:= IntTostr(TileTag);
+end;
+procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; TileTag: Integer);
+begin
+  Caption := 'add premuto sul prive' + TPlane(Sender).Tag.ToString;
+  //Girlgrid.Mat := GirlGrid.MatHighlight;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
 begin

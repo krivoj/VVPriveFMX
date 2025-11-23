@@ -37,12 +37,16 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
     procedure InternalImgMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+    procedure InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+
     procedure SetTileStateInternal(ATile: TPlane; AState: TTileState);
     function GetTileByTag(Tag: Integer): TPlane;
 
   public
     OnTileMouseDown: TTileMouseDownEvent;
     OnImgMouseDown: TTileMouseDownEvent;
+    OnImgAddMouseDown: TTileMouseDownEvent;
     OnStateChanged: TStateChangedEvent;
     constructor Create(AParent: TViewport3D; Cols, Rows: Integer;
       TileW, TileH, PadX, PadY: Single);
@@ -63,12 +67,13 @@ constructor TPrivGrid.Create(AParent: TViewport3D; Cols, Rows: Integer;
   TileW, TileH, PadX, PadY: Single);
 var
   X, Y, TotCells: Integer;
-  Plane, ImgPlane: TPlane;
+  Plane, ImgSwitch, ImgAdd: TPlane;
   Txt: TText3D;
   Data: TPrivStatus;
   ImgBitmap: TBitmap;
-  ImgMat: TTextureMaterialSource;
+  ImgMat, ImgMatAdd: TTextureMaterialSource;
   BaseBitmap: TBitmap;
+  RS : TResourceStream;
 begin
   inherited Create;
   FViewport := AParent;
@@ -81,6 +86,12 @@ begin
 
   FRoot := TDummy.Create(FViewport);
   FRoot.Parent := FViewport;
+
+  RS := TResourceStream.Create(HInstance, 'PNGADD', RT_RCDATA);
+  ImgMatAdd := TTextureMaterialSource.Create(FViewport);
+  ImgMatAdd.Texture.LoadFromStream(RS);
+  RS.Free;
+
 
   // Creazione texture arrotondate principali
   TexOff := TBitmap.Create;
@@ -151,20 +162,36 @@ begin
       ImgMat.Texture.Assign(ImgBitmap);
       ImgBitmap.Free; // <--- evitare memory leak
 
-      ImgPlane := TPlane.Create(FViewport);
-      ImgPlane.Parent := Plane;
-      ImgPlane.Width := FTileWidth * 0.23;
-      ImgPlane.Height := FTileHeight * 0.23;
-      ImgPlane.Position.X := (Plane.Width / 2) - (ImgPlane.Width / 1.5);
-      ImgPlane.Position.Y := (Plane.Height / 2) - (ImgPlane.Height / 1.5);
-      ImgPlane.Position.Z := 0.05;
-      ImgPlane.MaterialSource := ImgMat;
-      ImgPlane.TagObject := Data;
-      ImgPlane.Tag := Plane.Tag;
-      ImgPlane.OnMouseDown := InternalImgMouseDown;
-      ImgPlane.HitTest := True;
-      ImgPlane.RotationAngle.X := 180;
-      ImgPlane.Cursor := crHandPoint;
+      ImgSwitch := TPlane.Create(FViewport);
+      ImgSwitch.Parent := Plane;
+      ImgSwitch.Width := FTileWidth * 0.16;
+      ImgSwitch.Height := FTileHeight * 0.16;
+      ImgSwitch.Position.X := (Plane.Width / 2) - (ImgSwitch.Width / 1);
+      ImgSwitch.Position.Y := (Plane.Height / 2) - (ImgSwitch.Height / 1);
+      ImgSwitch.Position.Z := 0.05;
+      ImgSwitch.MaterialSource := ImgMat;
+      ImgSwitch.TagObject := Data;
+      ImgSwitch.Tag := Plane.Tag;
+      ImgSwitch.OnMouseDown := InternalImgMouseDown;
+      ImgSwitch.HitTest := True;
+      ImgSwitch.RotationAngle.X := 180;
+      ImgSwitch.Cursor := crHandPoint;
+
+
+      ImgAdd := TPlane.Create(FViewport);
+      ImgAdd.Parent := Plane;
+      ImgAdd.Width := FTileWidth * 0.16;
+      ImgAdd.Height := FTileHeight * 0.16;
+      ImgAdd.Position.X := (Plane.Width / 2 )  - 1.25;
+      ImgAdd.Position.Y := (Plane.Height / 2) - (ImgAdd.Height / 1);
+      ImgAdd.Position.Z := 0.05;
+      ImgAdd.MaterialSource := ImgMatAdd;
+      ImgAdd.TagObject := Data;
+      ImgAdd.Tag := Plane.Tag;
+      ImgAdd.OnMouseDown := InternalImgAddMouseDown;
+      ImgAdd.HitTest := True;
+      ImgAdd.RotationAngle.X := 180;
+      ImgAdd.Cursor := crHandPoint;
 
 
       FTiles[X, Y] := Plane;
@@ -228,7 +255,13 @@ begin
       OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
   end;
 end;
+procedure TPrivGrid.InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+begin
+    if Assigned(OnImgAddMouseDown) then
+      OnImgAddMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
 
+end;
 procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TTileState);
 begin
   case AState of

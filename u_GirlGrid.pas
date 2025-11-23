@@ -21,8 +21,7 @@ type
     FRoot: TDummy;
     FTiles: array of array of TPlane;
 
-    Mat: TTextureMaterialSource;
-    Tex: TBitmap;
+    Tex,TexHighLight: TBitmap;
     MatText: TColorMaterialSource;
 
 
@@ -39,6 +38,8 @@ type
 
   public
     FNames: TStringList;
+    Mat, MatHighLight: TTextureMaterialSource;
+
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
     OnGirlGridImgDeleteMouseDown: TGirlGridMouseDownEvent;
     OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
@@ -79,8 +80,15 @@ begin
   Tex := TBitmap.Create;
   CreateRoundedBitmap(Tex, TAlphaColors.Gray);
 
+  TexHighLight := TBitmap.Create;
+  CreateRoundedBitmap(TexHighLight, TAlphaColors.Orange);
+
   Mat := TTextureMaterialSource.Create(FViewport);
   Mat.Texture.Assign(Tex);
+
+  MatHighLight := TTextureMaterialSource.Create(FViewport);
+  MatHighLight.Texture.Assign(TexHighLight);
+
 
   MatText := TColorMaterialSource.Create(FViewport);
   MatText.Color := TAlphaColorRec.White;
@@ -124,7 +132,6 @@ var
   col, row, i: Integer;
   Plane: TPlane;
   Txt: TText3D;
-  ImgBitmap: TBitmap;
   ImgMatDelete,ImgMatInfo: TTextureMaterialSource;
   ImgPlaneDelete, ImgPlaneInfo: TPlane;
   RS: TResourceStream;

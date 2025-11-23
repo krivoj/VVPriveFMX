@@ -1,2 +1,3 @@
 PNGDELETE  RCDATA  "delete.png"
 PNGINFO  RCDATA  "info.png"
+PNGADD RCDATA  "add.png"
