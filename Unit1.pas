@@ -24,8 +24,6 @@ type
     PrivGrid: TPrivGrid;
     procedure LoadGirlsList;
     procedure SetupCameraTopView;
-    procedure PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
-    procedure PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
   public
     procedure TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
@@ -44,11 +42,6 @@ type
     // Menu click
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    procedure CreateAddGirlOverlay;
-    procedure ShowAddGirlOverlay;
-    procedure HideAddGirlOverlay;
-    procedure AddGirlConfirm(Sender: TObject);
-    procedure AddGirlCancel(Sender: TObject);
 
 
 
@@ -69,13 +62,11 @@ var
   MBorder: TPlane;
   BorderMat: TColorMaterialSource;
 
-  FAddGirlOverlay : TLayout;
-  FAddGirlEdit : TEdit;
 
   FYesNoOverlay : TLayout;
   FYesNoTitle : TLabel;
   Confirm: TConfirmDialog;
-
+  InputGirl: TInputDialog;
 implementation
 
 {$R *.fmx}
@@ -91,7 +82,7 @@ begin
 
   FormReady := False;
   Confirm := TConfirmDialog.Create(Self, Self);
-  CreateAddGirlOverlay;
+  InputGirl := TInputDialog.Create(Self, Self);
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
@@ -172,7 +163,6 @@ procedure TForm1.LoadGirlsList;
 var
   FileName : string;
   AGirl : TGirl;
-  i: integer;
 begin
 
     for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
@@ -264,12 +254,13 @@ begin
     procedure
     begin
       // YES
-      ShowMessage('Hai premuto SÌ');
+      Girlgrid.DeleteGirl(Tag);
+      Deletefile (dirSaves + Tag + '.json');
+
     end,
     procedure
     begin
       // NO
-      ShowMessage('Hai premuto NO');
     end
   );
 end;
@@ -279,7 +270,7 @@ begin
   if FileExists (dirSaves + Tag + '.json' ) then
   //  ShowyesNoOverlay ( 'Mostro info ' + Uppercase(Tag) + '?');
   Confirm.Show(
-  'Vuoi davvero cancellare questa ragazza?',
+  'info ragazza?',
   procedure
   begin
     // YES
@@ -294,195 +285,56 @@ begin
 end;
 
 procedure TForm1.AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
-    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-begin
-  if Girls.count < 48 then
-    ShowAddGirlOverlay
-    else begin
-      ShowMessage ('Puoi gestire al massimo 48 ragazze');
-    end;
-end;
-procedure TForm1.ShowAddGirlOverlay;
-begin
-  FAddGirlOverlay.Visible := True;
-  FAddGirlOverlay.Opacity := 1.0;
-  FAddGirlEdit.Text := '';
-  FAddGirlEdit.SetFocus;
-end;
-procedure TForm1.HideAddGirlOverlay;
-begin
-  FAddGirlOverlay.Visible := False;
-end;
-procedure TForm1.AddGirlConfirm(Sender: TObject);
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 var
   GirlStorage: TGirlStorage;
   Data: TGirlData;
+  Name: string;
 begin
-  name := Trim(FAddGirlEdit.Text);
-  if (Length(name) <= 0) then begin
-    ShowMessage ( 'Inserisci un nome.' );
-    exit;
-  end;
-  if not System.IOUtils.Tpath.HasValidFileNameChars( name , false ) then begin
-    ShowMessage ( 'Inserisci un nome senza caratteri speciali.' );
-    exit;
-  end;
+  if Girls.Count < 48 then
+  begin
 
-  if not FileExists( DirSaves + name + '.json') then begin
-    Data.Prive := -1;
-    Data.Start := 0;
-    SetLength(Data.Activities, 0);
-    GirlStorage.SaveGirl(name, Data);
-    Girlgrid.AddGirl(name);
-    FAddGirlEdit.Text := '';
+    InputGirl.Show(
+      'Aggiungi ragazza, digita il nome.',
+      procedure
+      begin
+        // YES
+        Name := Trim(InputGirl.FEdit.Text);
+        if Length(Name) <= 0 then
+        begin
+          ShowMessage('Inserisci un nome.');
+          Exit;
+        end;
+        if not System.IOUtils.TPath.HasValidFileNameChars(Name, False) then
+        begin
+          ShowMessage('Inserisci un nome senza caratteri speciali.');
+          Exit;
+        end;
+        if not FileExists(DirSaves + Name + '.json') then
+        begin
+          Data.Prive := -1;
+          Data.Start := 0;
+          SetLength(Data.Activities, 0);
+          GirlStorage.SaveGirl(Name, Data);
+          GirlGrid.AddGirl(Name);
+          InputGirl.FEdit.Text := '';
+        end
+        else
+        begin
+          ShowMessage(Name + ' è già presente');
+        end;
+      end,
+      procedure
+      begin
+        // NO
+      end
+    ); // <- chiude la chiamata a InputGirl.Show
+      InputGirl.FEdit.setfocus;
+
   end
-  else begin
-    ShowMessage ( name + ' è già presente' );
-  end;
-
-  HideAddGirlOverlay;
+  else
+    ShowMessage('Puoi gestire al massimo 48 ragazze');
 end;
-
-procedure TForm1.PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
-var
-  Btn: TButton;
-  TextRect: TRectF;
-begin
-  Btn := Sender as TButton;
-
-  // sfondo
-  Canvas.Fill.Color := $FFFFCCCC;
-  Canvas.Fill.Kind  := TBrushKind.Solid;
-  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
-
-  // testo
-  Canvas.Fill.Color := $FF000000; // nero
-  Canvas.Font.Size := 24;//Btn.TextSettings.Font.Size;
-  Canvas.Font.Family := Btn.TextSettings.Font.Family;
-  Canvas.Font.Style :=   [TFontStyle.fsBold]; //Btn.TextSettings.Font.Style;
-
-  TextRect := ARect;
-  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
-end;
-procedure TForm1.PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
-var
-  Btn: TButton;
-  TextRect: TRectF;
-begin
-  Btn := Sender as TButton;
-
-  // sfondo
-  Canvas.Fill.Color := $FFCCFFCC;
-  Canvas.Fill.Kind  := TBrushKind.Solid;
-  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
-
-  // testo
-  Canvas.Fill.Color := $FF000000; // nero
-  Canvas.Font.Size := 24;//Btn.TextSettings.Font.Size;
-  Canvas.Font.Family := Btn.TextSettings.Font.Family;
-  Canvas.Font.Style :=  [TFontStyle.fsBold]; //Btn.TextSettings.Font.Style;Btn.TextSettings.Font.Style;
-
-  TextRect := ARect;
-  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
-end;
-
-procedure TForm1.AddGirlCancel(Sender: TObject);
-begin
-  HideAddGirlOverlay;
-end;
-procedure TForm1.CreateAddGirlOverlay;
-var
-  bg, box : TRectangle;
-  title : TLabel;
-  ok, cancel : TButton;
-// footer con pulsanti affiancati
-  footer: TLayout;
-begin
-  FAddGirlOverlay := TLayout.Create(Self);
-  FAddGirlOverlay.Parent := Self;
-  FAddGirlOverlay.Align := TAlignLayout.Contents;
-  FAddGirlOverlay.Visible := False;
-  FAddGirlOverlay.HitTest := True;
-  FAddGirlOverlay.Opacity := 0.0;
-
-  // sfondo scuro semi trasparente
-  bg := TRectangle.Create(FAddGirlOverlay);
-  bg.Parent := FAddGirlOverlay;
-  bg.Align := TAlignLayout.Contents;
-  bg.Fill.Color := $88000000;
-  bg.Stroke.Kind := TBrushKind.None;
-
-  // box centrale
-  box := TRectangle.Create(FAddGirlOverlay);
-  box.Parent := FAddGirlOverlay;
-  box.Align := TAlignLayout.Center;
-  box.Width := 800;
-  box.Height := 300;
-  box.XRadius := 20;
-  box.YRadius := 20;
-  box.Fill.Color := $FFFFFFFF;
-
-  title := TLabel.Create(box);
-  title.Parent := box;
-  title.Align := TAlignLayout.Top;
-  title.Text := 'Nuova ragazza';
-  title.Margins.Top := 20;
-  title.Font.Size := 14;
-  title.Font.Style := [TFontStyle.fsBold];
-  title.TextSettings.HorzAlign := TTextAlign.Center;
-  title.TextSettings.VertAlign := TTextAlign.Center;
-  title.Scale.X := 4;
-  title.Scale.Y := 2;
-
-  FAddGirlEdit := TEdit.Create(box);
-  FAddGirlEdit.Parent := box;
-  FAddGirlEdit.Align := TAlignLayout.Client;
-  FAddGirlEdit.Font.Size := 22;
-  FAddGirlEdit.Scale.X := 10;
-  FAddGirlEdit.Scale.Y := 7;
-
-  // FOOTER
-  footer := TLayout.Create(box);
-  footer.Parent := box;
-  footer.Align := TAlignLayout.Bottom;
-  footer.Height := 80;
-  footer.Padding.Left := 20;
-  footer.Padding.Right := 20;
-
-  // Pulsante ANNULLA (sinistra)
-  cancel := TButton.Create(footer);
-  cancel.Parent := footer;
-  cancel.Align := TAlignLayout.Left;
-  cancel.Width := 380;
-  cancel.Text := 'Annulla';
-  cancel.Margins.Right := 40;
-  cancel.OnClick := AddGirlCancel;
-
-  // abilita colore custom
-  cancel.StyledSettings := [];
-  cancel.OnPaint := PaintCancel;
-  cancel.TextSettings.FontColor := $FF000000; // testo nero
-  cancel.TextSettings.HorzAlign := TTextAlign.Center;
-  // rosso chiaro (background)
-
-  // Pulsante AGGIUNGI (destra)
-  ok := TButton.Create(footer);
-  ok.Parent := footer;
-  ok.Align := TAlignLayout.Right;
-  ok.Width := 380;
-  ok.Text := 'Aggiungi';
-  ok.Margins.Left := 40;
-  ok.OnClick := AddGirlConfirm;
-
-  // abilita colore custom
-  ok.StyledSettings := [];
-  ok.OnPaint := PaintOk;
-  ok.TextSettings.FontColor := $FF000000; // testo nero
-  ok.TextSettings.HorzAlign := TTextAlign.Center;
-
-
-end;
-
 
 end.
 
