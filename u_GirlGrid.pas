@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, Math,
+  System.SysUtils, System.Types, System.UITypes, System.Classes, Math, Generics.defaults,
   System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,
   FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
 
@@ -11,6 +11,11 @@ type
 
   TGirlGridMouseDownEvent = procedure(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TagString: string) of object;
+
+  TGirl = record
+    Name: string;
+    Prive: integer;
+  end;
 
   TGirlGrid = class
   private
@@ -20,6 +25,7 @@ type
     FViewport: TViewport3D;
     FRoot: TDummy;
     FTiles: array of array of TPlane;
+    FGirls: Tlist<TGirl>;
 
     MatText: TColorMaterialSource;
 
@@ -36,7 +42,6 @@ type
     procedure RebuildGrid;
 
   public
-    FNames: TStringList;
     Mat, MatHighLight: TTextureMaterialSource;
 
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
@@ -44,12 +49,13 @@ type
     OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
-      TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
+      TileW, TileH, PadX, PadY: Single;  const LstGirls: Tlist<TGirl>);
     destructor Destroy; override;
     procedure SetBasePosition(BaseX, BaseY: Single);
 
     procedure AddGirl(const GirlName: string);
     procedure DeleteGirl(const GirlName: string);
+    function IndexOfGirl(const AGirlName: string): Integer;
   end;
 
 
@@ -58,14 +64,14 @@ implementation
 { TGirlGrid }
 
 constructor TGirlGrid.Create(AParent: TViewport3D;
-  TileW, TileH, PadX, PadY: Single; LstGirls: TstringList);
+  TileW, TileH, PadX, PadY: Single; const LstGirls: Tlist<TGirl>);
 var
   RS : TResourceStream;
 begin
 
   inherited Create;
   FViewport := AParent;
-
+  FGirls :=  LstGirls;
   // Griglia fissa
   FCols := 2;
   FRows := 24;
@@ -91,13 +97,6 @@ begin
   MatText := TColorMaterialSource.Create(FViewport);
   MatText.Color := TAlphaColorRec.White;
 
-  FNames := TStringList.Create;
-  FNames.CaseSensitive := False;
-  FNames.Sorted := True;
-  FNames.Duplicates := dupIgnore;
-  if Assigned(LstGirls) then
-    FNames.Assign(LstGirls);
-
   SetLength(FTiles, FCols, FRows);
   FillChar(FTiles[0,0], SizeOf(TPlane)*FCols*FRows, 0);
 
@@ -116,7 +115,6 @@ begin
         FTiles[X, Y] := nil;
       end;
 
-  FNames.Free;
 
   Mat.Free;
   MatHighLight.Free;
@@ -156,7 +154,7 @@ begin
   for col := FCols - 1 downto 0 do       // destra -> sinistra
     for row := 0 to FRows - 1 do        // dall’alto verso il basso
     begin
-      if i >= FNames.Count then Exit;
+      if i >= FGirls.Count then Exit;
 
       Plane := TPlane.Create(FViewport);
       Plane.Parent := FRoot;
@@ -171,7 +169,7 @@ begin
       Plane.OnMouseDown := InternalMouseDown;
 
       Plane.Tag := i;
-      Plane.TagString := Uppercase(FNames[i]);
+      Plane.TagString := Uppercase(FGirls[i].Name);
       Plane.Cursor := crHandPoint;
 
       FTiles[col,row] := Plane;
@@ -204,7 +202,7 @@ begin
       ImgPlaneDelete.Position.Y := (Plane.Height / 2) - 0.2 ;
       ImgPlaneDelete.Position.Z := 0.05;
       ImgPlaneDelete.MaterialSource := ImgMatdelete;
-      ImgPlaneDelete.TagString := Uppercase(FNames[i]);
+      ImgPlaneDelete.TagString := Uppercase(FGirls[i].Name);
       ImgPlaneDelete.Tag := Plane.Tag;
       ImgPlaneDelete.OnMouseDown := InternalImgDeleteMouseDown;
       ImgPlaneDelete.HitTest := True;
@@ -219,7 +217,7 @@ begin
       ImgPlaneInfo.Position.Y := (Plane.Height / 2) - 0.2 ;
       ImgPlaneInfo.Position.Z := 0.05;
       ImgPlaneInfo.MaterialSource := ImgMatInfo;
-      ImgPlaneInfo.TagString := Uppercase(FNames[i]);
+      ImgPlaneInfo.TagString := Uppercase(FGirls[i].Name);
       ImgPlaneInfo.Tag := Plane.Tag;
       ImgPlaneInfo.OnMouseDown := InternalImgInfoMouseDown;
       ImgPlaneInfo.HitTest := True;
@@ -277,27 +275,47 @@ begin
 end;
 
 procedure TGirlGrid.AddGirl(const GirlName: string);
+var
+  AGirl: TGirl;
 begin
   if GirlName.Trim = '' then Exit;
-
-  FNames.Add(GirlName);
-  FNAmes.Sort;
-  RebuildGrid;
-end;
+  AGirl.Name := GirlName;
+  AGirl.Prive := -1;
+  FGirls.Add(AGirl);
+  FGirls.Sort(TComparer<TGirl>.Construct(
+    function(const A, B: TGirl): Integer
+    begin
+      Result := CompareText(A.Name, B.Name);  // ordina per Name
+    end));
+    RebuildGrid;
+  end;
 procedure TGirlGrid.DeleteGirl(const GirlName: string);
 var
   idx: Integer;
 begin
   if GirlName.Trim = '' then Exit;
 
-  idx := FNames.IndexOf(GirlName);
+  idx := IndexOfGirl(GirlName);
   if idx < 0 then
     Exit; // non trovata
 
-  FNames.Delete(idx);
-  FNames.Sort;
-
+  FGirls.Delete(idx);
+  FGirls.Sort(TComparer<TGirl>.Construct(
+    function(const A, B: TGirl): Integer
+    begin
+      Result := CompareText(A.Name, B.Name);  // ordina per Name
+    end));
   RebuildGrid;
+end;
+function TGirlGrid.IndexOfGirl(const AGirlName: string): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to FGirls.Count - 1 do
+    if SameText(FGirls[i].Name, AGirlName) then
+      Exit(i);
+
+  Result := -1; // non trovata
 end;
 function TGirlGrid.GetTileByText(Text: String): TPlane;
 var

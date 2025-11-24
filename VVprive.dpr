@@ -17,7 +17,9 @@ uses
   FMX.Forms,
   Unit1 in 'Unit1.pas' {Form1},
   u_PrivGrid in 'u_PrivGrid.pas',
-  u_GirlGrid in 'u_GirlGrid.pas';
+  u_GirlGrid in 'u_GirlGrid.pas',
+  u_GirlStorage in 'u_GirlStorage.pas',
+  u_Dialogs in 'u_Dialogs.pas';
 
 {$R *.res}
 

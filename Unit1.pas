@@ -3,8 +3,8 @@
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
-  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid,
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,
+  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources,
@@ -20,7 +20,6 @@ type
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    DirSaves: string;
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
     procedure LoadGirlsList;
@@ -52,13 +51,6 @@ type
     procedure AddGirlCancel(Sender: TObject);
 
 
-    procedure DeleteGirlMouseDown(Sender: TObject; Button: TMouseButton;
-    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    procedure CreateYesNoOverlay;
-    procedure HideYesNoOverlay;
-    procedure ShowYesNoOverlay( Title: string );
-    procedure YesNoYes(Sender: TObject);
-    procedure YesNoNo(Sender: TObject);
 
   end;
 
@@ -66,6 +58,8 @@ type
 var
   Form1: TForm1;
   FormReady: Boolean;
+  DirSaves: string;
+  Girls: TList<TGirl>;
 
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
@@ -80,6 +74,8 @@ var
 
   FYesNoOverlay : TLayout;
   FYesNoTitle : TLabel;
+  Confirm: TConfirmDialog;
+
 implementation
 
 {$R *.fmx}
@@ -94,8 +90,8 @@ begin
 
 
   FormReady := False;
+  Confirm := TConfirmDialog.Create(Self, Self);
   CreateAddGirlOverlay;
-  CreateYesNoOverlay;
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
@@ -108,6 +104,7 @@ begin
   PrivGrid.OnImgAddMouseDown := ImgAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
+  Girls:= TList<TGirl>.Create;
   LoadGirlsList; // GirlGrid
 
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
@@ -173,16 +170,24 @@ end;
 
 procedure TForm1.LoadGirlsList;
 var
-  FilesList: TStringList;
   FileName : string;
+  AGirl : TGirl;
+  i: integer;
 begin
 
-  FilesList := TStringList.Create;
-    for FileName in TDirectory.GetFiles(DirSaves, '*.txt') do
-      FilesList.Add(System.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
-    FilesList.Sort;
-    GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, FilesList );
-    FilesList.Free;
+    for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
+      begin
+        AGirl.Name := System.IOUtils.TPath.GetFileNameWithoutExtension(FileName);
+        AGirl.Prive := -1;
+        Girls.Add(AGirl);
+      end;
+  Girls.Sort(TComparer<TGirl>.Construct(
+    function(const A, B: TGirl): Integer
+    begin
+      Result := CompareText(A.Name, B.Name);  // ordina per Name
+    end));
+
+  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, Girls );
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
@@ -253,22 +258,45 @@ end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 begin
-  if FileExists (dirSaves + Tag + '.txt' ) then
-    ShowyesNoOverlay ( 'Elimino dalla lista ' + Uppercase(Tag) + '?');
-
+  if FileExists (dirSaves + Tag + '.json' ) then
+  Confirm.Show(
+    'Vuoi davvero cancellare questa ragazza?' + sLineBreak + Uppercase(Tag),
+    procedure
+    begin
+      // YES
+      ShowMessage('Hai premuto SÌ');
+    end,
+    procedure
+    begin
+      // NO
+      ShowMessage('Hai premuto NO');
+    end
+  );
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 begin
-  if FileExists (dirSaves + Tag + '.txt' ) then
-    ShowyesNoOverlay ( 'Mostro info ' + Uppercase(Tag) + '?');
-
+  if FileExists (dirSaves + Tag + '.json' ) then
+  //  ShowyesNoOverlay ( 'Mostro info ' + Uppercase(Tag) + '?');
+  Confirm.Show(
+  'Vuoi davvero cancellare questa ragazza?',
+  procedure
+  begin
+    // YES
+    ShowMessage('Hai premuto SÌ');
+  end,
+  procedure
+  begin
+    // NO
+    ShowMessage('Hai premuto NO');
+  end
+);
 end;
 
 procedure TForm1.AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
-  if GirlGrid.Fnames.count < 48 then
+  if Girls.count < 48 then
     ShowAddGirlOverlay
     else begin
       ShowMessage ('Puoi gestire al massimo 48 ragazze');
@@ -287,8 +315,8 @@ begin
 end;
 procedure TForm1.AddGirlConfirm(Sender: TObject);
 var
-  name: string;
-  MyFile: TextFile;
+  GirlStorage: TGirlStorage;
+  Data: TGirlData;
 begin
   name := Trim(FAddGirlEdit.Text);
   if (Length(name) <= 0) then begin
@@ -300,13 +328,12 @@ begin
     exit;
   end;
 
-  if not FileExists( DirSaves + name + '.txt') then begin
-    AssignFile(myFile, DirSaves + name + '.txt');
-    ReWrite(myFile);
-    CloseFile(myFile);
+  if not FileExists( DirSaves + name + '.json') then begin
+    Data.Prive := -1;
+    Data.Start := 0;
+    SetLength(Data.Activities, 0);
+    GirlStorage.SaveGirl(name, Data);
     Girlgrid.AddGirl(name);
-    //Girlgrid.Free;
-   // LoadGirlsList;
     FAddGirlEdit.Text := '';
   end
   else begin
@@ -314,11 +341,6 @@ begin
   end;
 
   HideAddGirlOverlay;
-end;
-procedure TForm1.DeleteGirlMouseDown(Sender: TObject; Button: TMouseButton;
-    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-begin
-  ShowYesNoOverlay ('Rimuovo la ragazza selezionata?');
 end;
 
 procedure TForm1.PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
@@ -460,109 +482,7 @@ begin
 
 
 end;
-procedure TForm1.CreateYesNoOverlay;
-var
-  bg, box : TRectangle;
-  ok, cancel : TButton;
-// footer con pulsanti affiancati
-  footer: TLayout;
-begin
-  FYesNoOverlay := TLayout.Create(Self);
-  FYesNoOverlay.Parent := Self;
-  FYesNoOverlay.Align := TAlignLayout.Contents;
-  FYesNoOverlay.Visible := False;
-  FYesNoOverlay.HitTest := True;
-  FYesNoOverlay.Opacity := 0.0;
 
-  // sfondo scuro semi trasparente
-  bg := TRectangle.Create(FYesNoOverlay);
-  bg.Parent := FYesNoOverlay;
-  bg.Align := TAlignLayout.Contents;
-  bg.Fill.Color := $88000000;
-  bg.Stroke.Kind := TBrushKind.None;
-
-  // box centrale
-  box := TRectangle.Create(FYesNoOverlay);
-  box.Parent := FYesNoOverlay;
-  box.Align := TAlignLayout.Center;
-  box.Width := 800;
-  box.Height := 300;
-  box.XRadius := 20;
-  box.YRadius := 20;
-  box.Fill.Color := $FFFFFFFF;
-
-  FYesNoTitle := TLabel.Create(box);
-  FYesNoTitle.Parent := box;
-  FYesNoTitle.Align := TAlignLayout.Top;
-  FYesNoTitle.Text := '';
-  FYesNoTitle.Margins.Top := 20;
-  FYesNoTitle.Font.Size := 14;
-  FYesNoTitle.TextSettings.HorzAlign := TTextAlign.Center;
-  FYesNoTitle.TextSettings.VertAlign := TTextAlign.Center;
-  FYesNoTitle.Scale.X := 4;
-  FYesNoTitle.Scale.Y := 2;
-
-
-  // FOOTER
-  footer := TLayout.Create(box);
-  footer.Parent := box;
-  footer.Align := TAlignLayout.Bottom;
-  footer.Height := 80;
-  footer.Padding.Left := 20;
-  footer.Padding.Right := 20;
-
-  // Pulsante ANNULLA (sinistra)
-  cancel := TButton.Create(footer);
-  cancel.Parent := footer;
-  cancel.Align := TAlignLayout.Left;
-  cancel.Width := 380;
-  cancel.Text := 'NO';
-  cancel.Margins.Right := 40;
-  cancel.OnClick := YesNoNo;
-
-  // abilita colore custom
-  cancel.StyledSettings := [];
-  cancel.OnPaint := PaintCancel;
-  cancel.TextSettings.FontColor := $FF000000; // testo nero
-  cancel.TextSettings.HorzAlign := TTextAlign.Center;
-  // rosso chiaro (background)
-
-  // Pulsante AGGIUNGI (destra)
-  ok := TButton.Create(footer);
-  ok.Parent := footer;
-  ok.Align := TAlignLayout.Right;
-  ok.Width := 380;
-  ok.Text := 'SI';
-  ok.Margins.Left := 40;
-  ok.OnClick := YesNoYes;
-
-  // abilita colore custom
-  ok.StyledSettings := [];
-  ok.OnPaint := PaintOk;
-  ok.TextSettings.FontColor := $FF000000; // testo nero
-  ok.TextSettings.HorzAlign := TTextAlign.Center;
-
-
-end;
-procedure TForm1.YesNoYes(Sender: TObject);
-begin
-  //
-end;
-
-procedure TForm1.YesNoNo(Sender: TObject);
-begin
-  HideyesNoOverlay;
-end;
-procedure TForm1.HideyesNoOverlay;
-begin
-  FYesNoOverlay.Visible := False;
-end;
-procedure TForm1.ShowYesNoOverlay ( Title: string );
-begin
-  FYesNoOverlay.Visible := True;
-  FYesNoOverlay.Opacity := 1.0;
-  FYesNoTitle.Text := Title;
-end;
 
 end.
 
