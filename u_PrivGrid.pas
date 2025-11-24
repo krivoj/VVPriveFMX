@@ -29,7 +29,7 @@ type
     FTiles: array of array of TPlane;
 
     MatOff, MatOn, MatAlarm: TTextureMaterialSource;
-    TexOff, TexOn, TexAlarm: TBitmap;
+
     MatText: TColorMaterialSource;
 
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
@@ -143,14 +143,19 @@ begin
       Txt := TText3D.Create(Plane);
       Txt.Parent := Plane;
       Txt.Font.Size := 8;
+      Txt.HorzTextAlign := TTextAlign.Center;
+      Txt.VertTextAlign := TTextAlign.Center;
+      Txt.Opacity := 0.2;
       Txt.WordWrap := False;
       Txt.MaterialSource := MatText;
       Txt.Text := IntToStr(Plane.Tag+1);
       Txt.Depth := 0.01;
-      Txt.Scale.X := 0.18;
-      Txt.Scale.Y := 0.18;
-      Txt.Position.X := -FTileWidth / 3.3;
-      Txt.Position.Y := FTileHeight / 3;
+      Txt.Scale.X := 0.50;
+      Txt.Scale.Y := 0.50;
+      Txt.Width := Plane.Width;
+      Txt.Height := Plane.Height;
+      Txt.Position.X := (Plane.Width / 2 ) - (Txt.Width / 2);
+      Txt.Position.Y := (Plane.Height / 2) - (Txt.Height / 2);
       Txt.Position.Z := 0.05;
       Txt.RotationAngle.X := -180;
       Txt.HitTest := False;
@@ -209,9 +214,6 @@ begin
     for X := 0 to FCols - 1 do
       FTiles[X, Y].DisposeOf;
 
-  TexOff.Free;
-  TexOn.Free;
-  TexAlarm.Free;
   MatOff.Free;
   MatOn.Free;
   MatAlarm.Free;

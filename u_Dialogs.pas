@@ -78,14 +78,17 @@ begin
 
   FTitle := TLabel.Create(box);
   FTitle.Parent := box;
+  FTitle.StyledSettings:=[];
   FTitle.Align := TAlignLayout.Top;
   FTitle.Margins.Top := 20;
-  FTitle.Font.Size := 14;
+  FTitle.AutoSize := False;
+  FTitle.Height := 150;
+  FTitle.TextSettings.Font.Size := 28;  // **questa modifica il font visibile**
+  FTitle.TextSettings.Font.Style := [TFontStyle.fsBold];
   FTitle.TextSettings.HorzAlign := TTextAlign.Center;
   FTitle.TextSettings.VertAlign := TTextAlign.Center;
-  FTitle.Scale.X := 4;
-  FTitle.Scale.Y := 2;
-  FTitle.WordWrap := true;
+  FTitle.WordWrap := True;
+  FTitle.TextSettings.WordWrap := True;
 
   footer := TLayout.Create(box);
   footer.Parent := box;
@@ -207,17 +210,20 @@ begin
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
 
+
   FTitle := TLabel.Create(box);
   FTitle.Parent := box;
+  FTitle.StyledSettings:=[];
   FTitle.Align := TAlignLayout.Top;
   FTitle.Margins.Top := 20;
-  FTitle.Font.Size := 14;
-  FTitle.Font.Style := [TFontStyle.fsBold];
+  //FTitle.AutoSize := False;
+  FTitle.Height := 50;
+  FTitle.TextSettings.Font.Size := 28;  // **questa modifica il font visibile**
+  FTitle.TextSettings.Font.Style := [TFontStyle.fsBold];
   FTitle.TextSettings.HorzAlign := TTextAlign.Center;
   FTitle.TextSettings.VertAlign := TTextAlign.Center;
-  FTitle.Scale.X := 4;
-  FTitle.Scale.Y := 2;
   FTitle.WordWrap := True;
+  FTitle.TextSettings.WordWrap := True;
 
   FEdit := TEdit.Create(box);
   FEdit.Parent := box;

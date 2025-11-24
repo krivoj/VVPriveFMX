@@ -266,22 +266,17 @@ begin
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
+var
+  AGirl: TGirlData;
+  GirlStorage: TGirlStorage;
 begin
   if FileExists (dirSaves + Tag + '.json' ) then
-  //  ShowyesNoOverlay ( 'Mostro info ' + Uppercase(Tag) + '?');
-  Confirm.Show(
-  'info ragazza?',
-  procedure
   begin
-    // YES
-    ShowMessage('Hai premuto SÌ');
-  end,
-  procedure
-  begin
-    // NO
-    ShowMessage('Hai premuto NO');
-  end
-);
+    GirlStorage:= TGirlStorage.Create;
+    AGirl:= GirlStorage.LoadGirl(Tag);
+    GirlStorage.Free;
+  end;
+
 end;
 
 procedure TForm1.AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
