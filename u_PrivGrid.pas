@@ -41,7 +41,6 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure SetTileStateInternal(ATile: TPlane; AState: TTileState);
-    function GetTileByTag(Tag: Integer): TPlane;
 
   public
     OnTileMouseDown: TTileMouseDownEvent;
@@ -55,6 +54,7 @@ type
     procedure SetTileState(Col, Row: Integer; State: TTileState);
     procedure SetBasePosition(BaseX, BaseY: Single);
     procedure ToggleTileState(ImgPlane: TPlane);
+    function GetTileByTag(Tag: Integer): TPlane;
   end;
 
 procedure MakeRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor; const Text: string = '');

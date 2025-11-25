@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, Math, Generics.defaults,
-  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,
+  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects, u_Privgrid,
   FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
 
 type
@@ -16,6 +16,8 @@ type
     Name: string;
     Prive: integer;
   end;
+type
+  PGirl = ^TGirl;
 
   TGirlGrid = class
   private
@@ -24,6 +26,7 @@ type
     FPadX, FPadY: Single;
     FViewport: TViewport3D;
     FRoot: TDummy;
+    FPrivGrid: TPrivGrid;
     FTiles: array of array of TPlane;
     FGirls: Tlist<TGirl>;
 
@@ -49,13 +52,14 @@ type
     OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
-      TileW, TileH, PadX, PadY: Single;  const LstGirls: Tlist<TGirl>);
+      TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid;  const LstGirls: Tlist<TGirl>);
     destructor Destroy; override;
     procedure SetBasePosition(BaseX, BaseY: Single);
 
     procedure AddGirl(const GirlName: string);
     procedure DeleteGirl(const GirlName: string);
     function IndexOfGirl(const AGirlName: string): Integer;
+    function GetGirl(const AGirlName: string): TGirl;
   end;
 
 
@@ -64,7 +68,7 @@ implementation
 { TGirlGrid }
 
 constructor TGirlGrid.Create(AParent: TViewport3D;
-  TileW, TileH, PadX, PadY: Single; const LstGirls: Tlist<TGirl>);
+  TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid; const LstGirls: Tlist<TGirl>);
 var
   RS : TResourceStream;
 begin
@@ -72,6 +76,7 @@ begin
   inherited Create;
   FViewport := AParent;
   FGirls :=  LstGirls;
+  FPrivGrid := PrivGrid;
   // Griglia fissa
   FCols := 2;
   FRows := 24;
@@ -131,6 +136,7 @@ var
   ImgMatDelete,ImgMatInfo: TTextureMaterialSource;
   ImgPlaneDelete, ImgPlaneInfo: TPlane;
   RS: TResourceStream;
+  APrivPlane: TPlane;
 begin
   RS := TResourceStream.Create(HInstance, 'PNGDELETE', RT_RCDATA);
   ImgMatDelete := TTextureMaterialSource.Create(FViewport);
@@ -157,13 +163,23 @@ begin
       if i >= FGirls.Count then Exit;
 
       Plane := TPlane.Create(FViewport);
-      Plane.Parent := FRoot;
       Plane.Width := FTileWidth;
       Plane.Height := FTileHeight;
       Plane.MaterialSource := Mat;
 
-      Plane.Position.X := -((FCols - 1) - col) * (FTileWidth + FPadX);
-      Plane.Position.Y := (FRows - 1 - row) * (FTileHeight + FPadY);  // alto -> basso
+      if FGirls[i].Prive < 0 then
+      begin
+        Plane.Parent := FRoot;
+        Plane.Position.X := -((FCols - 1) - col) * (FTileWidth + FPadX);
+        Plane.Position.Y := (FRows - 1 - row) * (FTileHeight + FPadY);  // alto -> basso
+      end
+      else begin
+        // LA RAGAZZA E' IN PRIVE
+        APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
+        Plane.Parent := APrivPlane;
+        Plane.Position.X := 0;
+        Plane.Position.Y := 0;
+      end;
 
       Plane.HitTest := True;
       Plane.OnMouseDown := InternalMouseDown;
@@ -316,6 +332,16 @@ begin
       Exit(i);
 
   Result := -1; // non trovata
+end;
+function TGirlGrid.GetGirl(const AGirlName: string): TGirl;
+var
+  i: Integer;
+begin
+  for i := 0 to FGirls.Count - 1 do
+    if SameText(FGirls[i].Name, AGirlName) then
+      Exit(FGirls[i]);
+
+  Result := Default(TGirl);
 end;
 function TGirlGrid.GetTileByText(Text: String): TPlane;
 var

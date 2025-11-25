@@ -177,7 +177,7 @@ begin
       Result := CompareText(A.Name, B.Name);  // ordina per Name
     end));
 
-  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, Girls );
+  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid, Girls );
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
@@ -247,22 +247,31 @@ begin
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
+var
+  AGirl : TGirl;
 begin
-  if FileExists (dirSaves + Tag + '.json' ) then
-  Confirm.Show(
-    'Vuoi davvero cancellare questa ragazza?' + sLineBreak + Uppercase(Tag),
-    procedure
-    begin
-      // YES
-      Girlgrid.DeleteGirl(Tag);
-      Deletefile (dirSaves + Tag + '.json');
+  AGirl := GirlGrid.GetGirl( Tag );
+  if AGirl.Prive < 0 then begin
+    if FileExists (dirSaves + Tag + '.json' ) then
+    Confirm.Show(
+      'Vuoi davvero cancellare questa ragazza?' + sLineBreak + Uppercase(Tag),
+      procedure
+      begin
+        // YES
+        Girlgrid.DeleteGirl(Tag);
+        Deletefile (dirSaves + Tag + '.json');
 
-    end,
-    procedure
-    begin
-      // NO
-    end
-  );
+      end,
+      procedure
+      begin
+        // NO
+      end
+    );
+  end
+  else begin
+    // LA RAGAZZA E' IN PRIVE'
+    { TODO : rimuove la ragazza dal privè }
+  end;
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
