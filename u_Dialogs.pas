@@ -3,7 +3,7 @@ unit u_Dialogs;
 interface
 
 uses
-  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes,
+  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.SpinBox,FMX.Text,
   FMX.StdCtrls, FMX.Graphics, FMX.Edit;
 
 type
@@ -41,6 +41,26 @@ type
     procedure Show(const Title: string; OnConfirm: TProc; OnCancel: TProc);
     procedure Hide;
   end;
+
+type
+  TSpinBoxDialog = class
+  private
+    FOwner: TComponent;
+    FRoot: TLayout;
+    FTitle: TLabel;
+    FSpin: TSpinBox;
+    FOnConfirm: TProc<Integer>;
+    FOnCancel: TProc;
+    procedure ClickConfirm(Sender: TObject);
+    procedure ClickCancel(Sender: TObject);
+    procedure PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+    procedure PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+  public
+    constructor Create(AOwner: TComponent; AParent: TFmxObject);
+    procedure Show(const Title: string; OnConfirm: TProc<Integer>; OnCancel: TProc);
+    procedure Hide;
+  end;
+
 
 implementation
 
@@ -305,6 +325,154 @@ begin
 end;
 
 procedure TInputDialog.PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+var
+  Btn: TButton;
+  TextRect: TRectF;
+begin
+  Btn := Sender as TButton;
+  Canvas.Fill.Color := $FFCCFFCC;
+  Canvas.Fill.Kind := TBrushKind.Solid;
+  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
+  Canvas.Fill.Color := $FF000000;
+  Canvas.Font.Size := 24;
+  Canvas.Font.Family := Btn.TextSettings.Font.Family;
+  Canvas.Font.Style := [TFontStyle.fsBold];
+  TextRect := ARect;
+  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
+end;
+{ TSpinBoxDialog }
+
+constructor TSpinBoxDialog.Create(AOwner: TComponent; AParent: TFmxObject);
+var
+  bg, box: TRectangle;
+  footer: TLayout;
+  ok, cancel: TButton;
+begin
+  FOwner := AOwner;
+
+  FRoot := TLayout.Create(AOwner);
+  FRoot.Parent := AParent;
+  FRoot.Align := TAlignLayout.Contents;
+  FRoot.Visible := False;
+  FRoot.HitTest := True;
+  FRoot.Opacity := 0.0;
+
+  bg := TRectangle.Create(FRoot);
+  bg.Parent := FRoot;
+  bg.Align := TAlignLayout.Contents;
+  bg.Fill.Color := $88000000;
+  bg.Stroke.Kind := TBrushKind.None;
+
+  box := TRectangle.Create(FRoot);
+  box.Parent := FRoot;
+  box.Align := TAlignLayout.Center;
+  box.Width := 800;
+  box.Height := 300;
+  box.XRadius := 20;
+  box.YRadius := 20;
+  box.Fill.Color := $FFFFFFFF;
+
+  FTitle := TLabel.Create(box);
+  FTitle.Parent := box;
+  FTitle.Align := TAlignLayout.Top;
+  FTitle.Margins.Top := 20;
+  FTitle.StyledSettings := [];
+  FTitle.TextSettings.Font.Size := 28;
+  FTitle.TextSettings.Font.Style := [TFontStyle.fsBold];
+  FTitle.TextSettings.HorzAlign := TTextAlign.Center;
+  FTitle.TextSettings.VertAlign := TTextAlign.Center;
+
+  FSpin := TSpinBox.Create(box);
+  FSpin.Parent := box;
+  FSpin.Align := TAlignLayout.Client;
+  FSpin.Margins.Top := 80;
+  FSpin.Margins.Bottom := 80;
+
+  FSpin.Min := 5;
+  FSpin.Max := 180;
+  FSpin.Value := 10;     // default
+  FSpin.ValueType := TNumValueType.Integer;
+  FSpin.Increment := 5;
+
+  FSpin.TextSettings.Font.Size := 48;
+  FSpin.TextSettings.HorzAlign := TTextAlign.Center;
+
+  footer := TLayout.Create(box);
+  footer.Parent := box;
+  footer.Align := TAlignLayout.Bottom;
+  footer.Height := 80;
+  footer.Padding.Left := 20;
+  footer.Padding.Right := 20;
+
+  cancel := TButton.Create(footer);
+  cancel.Parent := footer;
+  cancel.Align := TAlignLayout.Left;
+  cancel.Width := 380;
+  cancel.Text := 'Annulla';
+  cancel.Margins.Right := 40;
+  cancel.OnClick := ClickCancel;
+  cancel.StyledSettings := [];
+  cancel.OnPaint := PaintCancel;
+
+  ok := TButton.Create(footer);
+  ok.Parent := footer;
+  ok.Align := TAlignLayout.Right;
+  ok.Width := 380;
+  ok.Text := 'Conferma';
+  ok.Margins.Left := 40;
+  ok.OnClick := ClickConfirm;
+  ok.StyledSettings := [];
+  ok.OnPaint := PaintOk;
+end;
+
+procedure TSpinBoxDialog.Show(const Title: string; OnConfirm: TProc<Integer>; OnCancel: TProc);
+begin
+  FTitle.Text := Title;
+  FOnConfirm := OnConfirm;
+  FOnCancel := OnCancel;
+  FRoot.Visible := True;
+  FRoot.Opacity := 1;
+end;
+
+procedure TSpinBoxDialog.Hide;
+begin
+  FRoot.Visible := False;
+end;
+
+procedure TSpinBoxDialog.ClickConfirm(Sender: TObject);
+begin
+  if Assigned(FOnConfirm) then
+    FOnConfirm(Round(FSpin.Value));
+
+  Hide;
+end;
+
+procedure TSpinBoxDialog.ClickCancel(Sender: TObject);
+begin
+  if Assigned(FOnCancel) then
+    FOnCancel();
+
+  Hide;
+end;
+
+procedure TSpinBoxDialog.PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+var
+  Btn: TButton;
+  TextRect: TRectF;
+begin
+  Btn := Sender as TButton;
+  Canvas.Fill.Color := $FFFFCCCC;
+  Canvas.Fill.Kind := TBrushKind.Solid;
+  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
+  Canvas.Fill.Color := $FF000000;
+  Canvas.Font.Size := 24;
+  Canvas.Font.Family := Btn.TextSettings.Font.Family;
+  Canvas.Font.Style := [TFontStyle.fsBold];
+  TextRect := ARect;
+  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
+end;
+
+procedure TSpinBoxDialog.PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
 var
   Btn: TButton;
   TextRect: TRectF;

@@ -279,7 +279,10 @@ begin
   end
   else begin
     // LA RAGAZZA E' IN PRIVE'
-    { TODO : rimuove la ragazza dal privè }
+    //RecordActivity;
+    AGirl.Prive := -1;
+    SelectionPrive := -1;
+    GirlGrid.RebuildGrid;
   end;
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;

@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
-  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,
+  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,u_Dialogs,
   FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
 
 type
@@ -31,7 +31,7 @@ type
     MatOff, MatOn, MatAlarm: TTextureMaterialSource;
 
     MatText: TColorMaterialSource;
-
+    SpinDialog: TSpinBoxDialog;
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
@@ -83,6 +83,7 @@ begin
   FTileHeight := TileH;
   FPadX := PadX;
   FPadY := PadY;
+  SpinDialog := TSpinBoxDialog.Create(FViewport,FViewport);
 
   FRoot := TDummy.Create(FViewport);
   FRoot.Parent := FViewport;
@@ -145,11 +146,11 @@ begin
       Txt.Font.Size := 8;
       Txt.HorzTextAlign := TTextAlign.Center;
       Txt.VertTextAlign := TTextAlign.Center;
-      Txt.Opacity := 0.2;
+      Txt.Opacity := 0.1;
       Txt.WordWrap := False;
       Txt.MaterialSource := MatText;
       Txt.Text := IntToStr(Plane.Tag+1);
-      Txt.Depth := 0.01;
+      Txt.Depth := 0.00;
       Txt.Scale.X := 0.50;
       Txt.Scale.Y := 0.50;
       Txt.Width := Plane.Width;
@@ -214,6 +215,7 @@ begin
     for X := 0 to FCols - 1 do
       FTiles[X, Y].DisposeOf;
 
+  SpinDialog.Free;
   MatOff.Free;
   MatOn.Free;
   MatAlarm.Free;
@@ -252,10 +254,28 @@ procedure TPrivGrid.InternalImgMouseDown(Sender: TObject; Button: TMouseButton;
 begin
   if Sender is TPlane then
   begin
-    ToggleTileState(TPlane(Sender));
-
-    if Assigned(OnImgMouseDown) then
-      OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+    if  TPrivStatus(TPlane(Sender).TagObject).State = tsOff then
+    begin
+      SpinDialog.Show(
+        'Durata del Privè (minuti)',
+        procedure(Minuti: Integer)
+        begin
+          ToggleTileState(TPlane(Sender));
+          if Assigned(OnImgMouseDown) then
+            OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+  //        ShowMessage('Hai scelto ' + Minuti.ToString + ' minuti');
+        end,
+        procedure
+        begin
+    //      ShowMessage('Annullato');
+        end
+      );
+    end
+    else begin
+      ToggleTileState(TPlane(Sender));
+      if Assigned(OnImgMouseDown) then
+        OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+    end;
   end;
 end;
 procedure TPrivGrid.InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
