@@ -12,12 +12,12 @@ type
   TGirlGridMouseDownEvent = procedure(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TagString: string) of object;
 
-  TGirl = record
-    Name: string;
-    Prive: integer;
-  end;
 type
-  PGirl = ^TGirl;
+  TGirl = class
+  public
+    Name: string;
+    Prive: Integer;
+  end;
 
   TGirlGrid = class
   private
@@ -28,7 +28,7 @@ type
     FRoot: TDummy;
     FPrivGrid: TPrivGrid;
     FTiles: array of array of TPlane;
-    FGirls: Tlist<TGirl>;
+    FGirls: TObjectlist<TGirl>;
 
     MatText: TColorMaterialSource;
 
@@ -42,7 +42,6 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     function GetTileByText(Text: String): TPlane;
-    procedure RebuildGrid;
 
   public
     Mat, MatHighLight: TTextureMaterialSource;
@@ -52,7 +51,7 @@ type
     OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
-      TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid;  const LstGirls: Tlist<TGirl>);
+      TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid;  const LstGirls: TObjectlist<TGirl>);
     destructor Destroy; override;
     procedure SetBasePosition(BaseX, BaseY: Single);
 
@@ -60,6 +59,7 @@ type
     procedure DeleteGirl(const GirlName: string);
     function IndexOfGirl(const AGirlName: string): Integer;
     function GetGirl(const AGirlName: string): TGirl;
+    procedure RebuildGrid;
   end;
 
 
@@ -68,7 +68,7 @@ implementation
 { TGirlGrid }
 
 constructor TGirlGrid.Create(AParent: TViewport3D;
-  TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid; const LstGirls: Tlist<TGirl>);
+  TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid; const LstGirls: TObjectlist<TGirl>);
 var
   RS : TResourceStream;
 begin
@@ -79,7 +79,7 @@ begin
   FPrivGrid := PrivGrid;
   // Griglia fissa
   FCols := 2;
-  FRows := 24;
+  FRows := 20;
   FTileWidth := TileW;
   FTileHeight := TileH;
   FPadX := PadX;
@@ -166,7 +166,7 @@ begin
       Plane.Width := FTileWidth;
       Plane.Height := FTileHeight;
       Plane.MaterialSource := Mat;
-
+      Plane.Depth := 0.02;
       if FGirls[i].Prive < 0 then
       begin
         Plane.Parent := FRoot;
@@ -295,6 +295,7 @@ var
   AGirl: TGirl;
 begin
   if GirlName.Trim = '' then Exit;
+  AGirl := TGirl.Create;
   AGirl.Name := GirlName;
   AGirl.Prive := -1;
   FGirls.Add(AGirl);

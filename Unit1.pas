@@ -47,12 +47,13 @@ type
 
   end;
 
-
+const MAXGIRLS = 40;
 var
   Form1: TForm1;
   FormReady: Boolean;
   DirSaves: string;
-  Girls: TList<TGirl>;
+  Girls: TObjectList<TGirl>;
+  SelectionPrive: Integer;
 
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
@@ -62,9 +63,6 @@ var
   MBorder: TPlane;
   BorderMat: TColorMaterialSource;
 
-
-  FYesNoOverlay : TLayout;
-  FYesNoTitle : TLabel;
   Confirm: TConfirmDialog;
   InputGirl: TInputDialog;
 implementation
@@ -78,7 +76,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
-
+  SelectionPrive := -1;
 
   FormReady := False;
   Confirm := TConfirmDialog.Create(Self, Self);
@@ -88,14 +86,14 @@ begin
   Viewport3D1.Visible := True;
 
   // Crea grid privè 6x4
-  PrivGrid := TPrivGrid.Create(Viewport3D1,  6, 4, 2.5,3,0.05,0.05);
-  PrivGrid.SetBasePosition(-9,-4.5);
+  PrivGrid := TPrivGrid.Create(Viewport3D1,  5, 3, 3,4,0.05,0.05);
+  PrivGrid.SetBasePosition(-8.5,-4);
   PrivGrid.OnTileMouseDown := TileMouseDown;
   PrivGrid.OnImgMouseDown := ImgMouseDown;
   PrivGrid.OnImgAddMouseDown := ImgAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
-  Girls:= TList<TGirl>.Create;
+  Girls:= TObjectList<TGirl>.Create(true);
   LoadGirlsList; // GirlGrid
 
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
@@ -164,9 +162,10 @@ var
   FileName : string;
   AGirl : TGirl;
 begin
-
+  Girls.Clear;
     for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
       begin
+        AGirl := TGirl.Create;
         AGirl.Name := System.IOUtils.TPath.GetFileNameWithoutExtension(FileName);
         AGirl.Prive := -1;
         Girls.Add(AGirl);
@@ -182,7 +181,7 @@ begin
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
   GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridImgInfoMouseDown;
-  GirlGrid.SetBasePosition(9,-4);
+  GirlGrid.SetBasePosition(9,-2.5);
 
 end;
 
@@ -231,7 +230,8 @@ end;
 procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  Caption := 'add premuto sul prive' + TPlane(Sender).Tag.ToString;
+  SelectionPrive := TileTag;
+  { TODO : highlight }
   //Girlgrid.Mat := GirlGrid.MatHighlight;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
@@ -241,9 +241,18 @@ begin
 end;
 procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
+var
+  AGirl: TGirl;
+  APrivTile :TPlane;
 begin
-  // puoi aggiungere logica click 3D se serve
-  Caption:= Tag;
+  If SelectionPrive > -1 then
+  begin
+    AGirl := GirlGrid.GetGirl(Tag);
+    AGirl.Prive := SelectionPrive;
+    APrivTile := PrivGrid.GetTileByTag(SelectionPrive);
+    SelectionPrive := -1;
+    GirlGrid.RebuildGrid;
+  end;
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
@@ -295,7 +304,7 @@ var
   Data: TGirlData;
   Name: string;
 begin
-  if Girls.Count < 48 then
+  if Girls.Count < MAXGIRLS then
   begin
 
     InputGirl.Show(

@@ -172,8 +172,8 @@ begin
       ImgSwitch.Parent := Plane;
       ImgSwitch.Width := FTileWidth * 0.16;
       ImgSwitch.Height := FTileHeight * 0.16;
-      ImgSwitch.Position.X := (Plane.Width / 2) - (ImgSwitch.Width / 1);
-      ImgSwitch.Position.Y := (Plane.Height / 2) - (ImgSwitch.Height / 1);
+      ImgSwitch.Position.X := 1;
+      ImgSwitch.Position.Y := 1.5;
       ImgSwitch.Position.Z := 0.05;
       ImgSwitch.MaterialSource := ImgMat;
       ImgSwitch.TagObject := Data;
@@ -188,8 +188,8 @@ begin
       ImgAdd.Parent := Plane;
       ImgAdd.Width := FTileWidth * 0.16;
       ImgAdd.Height := FTileHeight * 0.16;
-      ImgAdd.Position.X := (Plane.Width / 2 )  - 1.25;
-      ImgAdd.Position.Y := (Plane.Height / 2) - (ImgAdd.Height / 1);
+      ImgAdd.Position.X := -1  ;
+      ImgAdd.Position.Y := 1.5 ;
       ImgAdd.Position.Z := 0.05;
       ImgAdd.MaterialSource := ImgMatAdd;
       ImgAdd.TagObject := Data;
