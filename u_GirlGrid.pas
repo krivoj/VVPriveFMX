@@ -406,8 +406,8 @@ begin
   Anim.Parent := FRoot;
   Anim.PropertyName := 'Scale.X';
   Anim.StartValue := 1.0;
-  Anim.StopValue := 1.05;   // leggera pulsazione
-  Anim.Duration := 0.6;
+  Anim.StopValue := 1.03;   // leggera pulsazione
+  Anim.Duration := 1;
   Anim.AutoReverse := True;
   Anim.Loop := True;
   Anim.Enabled := True;
