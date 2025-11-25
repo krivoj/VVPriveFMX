@@ -240,20 +240,18 @@ procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; Tag: string);
 var
   AGirl: TGirl;
-  APrivTile: TPlane;
 begin
   if SelectionPrive > -1 then
+    begin
+      AGirl := GirlGrid.GetGirl(Tag);
+      if AGirl <> nil then
       begin
-        AGirl := GirlGrid.GetGirl(Tag);
-        if AGirl <> nil then
-        begin
-          AGirl.Prive := SelectionPrive;
-          APrivTile := PrivGrid.GetTileByTag(SelectionPrive);
-          SelectionPrive := -1;
+        AGirl.Prive := SelectionPrive;
+        SelectionPrive := -1;
 
-          GirlGrid.ClearGirlsHighlight;
-          GirlGrid.UpdateGrid;
-        end;
+        GirlGrid.ClearGirlsHighlight;
+        GirlGrid.UpdateGrid;
+      end;
   end;
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
