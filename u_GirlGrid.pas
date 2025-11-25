@@ -25,7 +25,6 @@ type
     FTileWidth, FTileHeight: Single;
     FPadX, FPadY: Single;
     FViewport: TViewport3D;
-    FRoot: TDummy;
     FPrivGrid: TPrivGrid;
     FTiles: array of array of TPlane;
     FGirls: TObjectlist<TGirl>;
@@ -42,6 +41,7 @@ type
 
     function GetTileByText(Text: String): TPlane;
   public
+    FRoot: TDummy;
     Mat, MatHighLight: TTextureMaterialSource;
 
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
@@ -62,6 +62,7 @@ type
     procedure ClearGirlsHighlight;
     procedure StartPulseAll;
     procedure StopPulseAll;
+    procedure UpdateGrid;
       end;
 
 
@@ -427,5 +428,41 @@ begin
   FRoot.Scale.X := 1.0;
   FRoot.Scale.Y := 1.0;
 end;
+procedure TGirlGrid.UpdateGrid;
+var
+  col, row, i: Integer;
+  Plane: TPlane;
+  Txt: TText3D;
+  APrivPlane: TPlane;
+begin
+  i := 0;
+  for col := FCols - 1 downto 0 do
+    for row := 0 to FRows - 1 do
+    begin
+      if i >= FGirls.Count then Exit;
+
+      Plane := FTiles[col, row];
+      if not Assigned(Plane) then Continue;
+
+      // Aggiorna parent e posizione
+      if FGirls[i].Prive < 0 then
+      begin
+        Plane.Parent := FRoot;
+        Plane.Position.X := -((FCols - 1) - col) * (FTileWidth + FPadX);
+        Plane.Position.Y := (FRows - 1 - row) * (FTileHeight + FPadY);
+      end
+      else
+      begin
+        APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
+        if Assigned(APrivPlane) then
+          Plane.Parent := APrivPlane;
+        Plane.Position.X := 0;
+        Plane.Position.Y := 0;
+      end;
+
+      Inc(i);
+    end;
+end;
+
 end.
 

@@ -238,15 +238,11 @@ begin
 end;
 procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; Tag: string);
+var
+  AGirl: TGirl;
+  APrivTile: TPlane;
 begin
   if SelectionPrive > -1 then
-  begin
-    // Tutto viene posticipato al thread principale dopo l'evento click
-    TThread.Queue(nil,
-      procedure
-      var
-        AGirl: TGirl;
-        APrivTile: TPlane;
       begin
         AGirl := GirlGrid.GetGirl(Tag);
         if AGirl <> nil then
@@ -256,9 +252,8 @@ begin
           SelectionPrive := -1;
 
           GirlGrid.ClearGirlsHighlight;
-          GirlGrid.RebuildGrid;
+          GirlGrid.UpdateGrid;
         end;
-      end);
   end;
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
@@ -274,12 +269,7 @@ begin
       procedure
       begin
         // YES
-        TThread.Queue(nil,
-        procedure
-        begin
-      // ora è sicuro modificare FGirls o ricreare le tile
-          Girlgrid.DeleteGirl(Tag);
-        end);
+        Girlgrid.DeleteGirl(Tag);
         Deletefile (dirSaves + Tag + '.json');
 
       end,
@@ -290,16 +280,11 @@ begin
     );
   end
   else begin
-    // LA RAGAZZA E' IN PRIVE'
+    // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL
     //RecordActivity;
     AGirl.Prive := -1;
     SelectionPrive := -1;
-    TThread.Queue(nil,
-    procedure
-    begin
-  // ora è sicuro modificare FGirls o ricreare le tile
-      GirlGrid.RebuildGrid;
-    end);
+    GirlGrid.UpdateGrid;
 
   end;
 end;
