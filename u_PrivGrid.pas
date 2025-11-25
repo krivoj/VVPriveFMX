@@ -44,7 +44,7 @@ type
 
   public
     OnTileMouseDown: TTileMouseDownEvent;
-    OnImgMouseDown: TTileMouseDownEvent;
+    OnSwitchMouseDown: TTileMouseDownEvent;
     OnImgAddMouseDown: TTileMouseDownEvent;
     OnStateChanged: TStateChangedEvent;
     constructor Create(AParent: TViewport3D; Cols, Rows: Integer;
@@ -261,8 +261,8 @@ begin
         procedure(Minuti: Integer)
         begin
           ToggleTileState(TPlane(Sender));
-          if Assigned(OnImgMouseDown) then
-            OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+          if Assigned(OnSwitchMouseDown) then
+            OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
   //        ShowMessage('Hai scelto ' + Minuti.ToString + ' minuti');
         end,
         procedure
@@ -273,8 +273,8 @@ begin
     end
     else begin
       ToggleTileState(TPlane(Sender));
-      if Assigned(OnImgMouseDown) then
-        OnImgMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+      if Assigned(OnSwitchMouseDown) then
+        OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
     end;
   end;
 end;

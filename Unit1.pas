@@ -27,7 +27,7 @@ type
   public
     procedure TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
-    procedure ImgMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
     procedure ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
@@ -89,7 +89,7 @@ begin
   PrivGrid := TPrivGrid.Create(Viewport3D1,  5, 3, 3,4,0.05,0.05);
   PrivGrid.SetBasePosition(-8.5,-4);
   PrivGrid.OnTileMouseDown := TileMouseDown;
-  PrivGrid.OnImgMouseDown := ImgMouseDown;
+  PrivGrid.OnSwitchMouseDown := SwitchMouseDown;
   PrivGrid.OnImgAddMouseDown := ImgAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
@@ -221,7 +221,7 @@ begin
   // puoi aggiungere logica click 3D se serve
   Caption:= IntTostr(TileTag);
 end;
-procedure TForm1.ImgMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
   // puoi aggiungere logica click 3D se serve
