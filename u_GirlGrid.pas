@@ -42,7 +42,6 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     function GetTileByText(Text: String): TPlane;
-
   public
     Mat, MatHighLight: TTextureMaterialSource;
 
@@ -60,6 +59,8 @@ type
     function IndexOfGirl(const AGirlName: string): Integer;
     function GetGirl(const AGirlName: string): TGirl;
     procedure RebuildGrid;
+    procedure HighlightAvailableGirls;
+    procedure ClearGirlsHighlight;
   end;
 
 
@@ -93,7 +94,7 @@ begin
   Mat.Texture.LoadFromStream(RS);
   RS.Free;
 
-  RS := TResourceStream.Create(HInstance, 'PNGBUTTONGIRL', RT_RCDATA);
+  RS := TResourceStream.Create(HInstance, 'PNGBUTTONGIRLHIGHLIGHT', RT_RCDATA);
   MatHighLight := TTextureMaterialSource.Create(FViewport);
   MatHighLight.Texture.LoadFromStream(RS);
   RS.Free;
@@ -357,7 +358,35 @@ begin
         Exit;
       end;
 end;
+procedure TGirlGrid.HighlightAvailableGirls;
+var
+  G: TGirl;
+  Tile: TPlane;
+begin
+  for G in FGirls do
+  begin
+    Tile := GetTileByText(G.Name);
+    if Tile = nil then Continue;
 
+    if G.Prive = -1 then
+      Tile.MaterialSource := MatHighlight      // libero → evidenziato
+    else
+      Tile.MaterialSource := Mat;      // occupato → grigio
+    tile.Repaint;
+  end;
 
+end;
+procedure TGirlGrid.ClearGirlsHighlight;
+var
+  G: TGirl;
+  Tile: TPlane;
+begin
+  for G in FGirls do
+  begin
+    Tile := GetTileByText(G.Name);
+    if Tile <> nil then
+      Tile.MaterialSource := Mat; // torna normale
+  end;
+end;
 end.
 

@@ -166,7 +166,7 @@ begin
     for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
       begin
         AGirl := TGirl.Create;
-        AGirl.Name := System.IOUtils.TPath.GetFileNameWithoutExtension(FileName);
+        AGirl.Name := Uppercase(System.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
         AGirl.Prive := -1;
         Girls.Add(AGirl);
       end;
@@ -218,21 +218,18 @@ end;
 procedure TForm1.TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  // puoi aggiungere logica click 3D se serve
   Caption:= IntTostr(TileTag);
 end;
 procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  // puoi aggiungere logica click 3D se serve
   Caption:= IntTostr(TileTag);
 end;
 procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
   SelectionPrive := TileTag;
-  { TODO : highlight }
-  //Girlgrid.Mat := GirlGrid.MatHighlight;
+  GirlGrid.HighlightAvailableGirls;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
 begin
@@ -252,6 +249,7 @@ begin
     APrivTile := PrivGrid.GetTileByTag(SelectionPrive);
     SelectionPrive := -1;
     GirlGrid.RebuildGrid;
+    GirlGrid.ClearGirlsHighlight;
   end;
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
@@ -349,7 +347,7 @@ begin
 
   end
   else
-    ShowMessage('Puoi gestire al massimo 48 ragazze');
+    ShowMessage('Puoi gestire al massimo ' +  MAXGIRLS.ToString + ' ragazze');
 end;
 
 end.
