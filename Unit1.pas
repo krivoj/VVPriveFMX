@@ -237,19 +237,28 @@ begin
   Caption:= IntTostr(TileTag);
 end;
 procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
-    Shift: TShiftState; Tag: string);
-var
-  AGirl: TGirl;
-  APrivTile :TPlane;
+  Shift: TShiftState; Tag: string);
 begin
-  If SelectionPrive > -1 then
+  if SelectionPrive > -1 then
   begin
-    AGirl := GirlGrid.GetGirl(Tag);
-    AGirl.Prive := SelectionPrive;
-    APrivTile := PrivGrid.GetTileByTag(SelectionPrive);
-    SelectionPrive := -1;
-    GirlGrid.RebuildGrid;
-    GirlGrid.ClearGirlsHighlight;
+    // Tutto viene posticipato al thread principale dopo l'evento click
+    TThread.Queue(nil,
+      procedure
+      var
+        AGirl: TGirl;
+        APrivTile: TPlane;
+      begin
+        AGirl := GirlGrid.GetGirl(Tag);
+        if AGirl <> nil then
+        begin
+          AGirl.Prive := SelectionPrive;
+          APrivTile := PrivGrid.GetTileByTag(SelectionPrive);
+          SelectionPrive := -1;
+
+          GirlGrid.ClearGirlsHighlight;
+          GirlGrid.RebuildGrid;
+        end;
+      end);
   end;
 end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
@@ -265,7 +274,12 @@ begin
       procedure
       begin
         // YES
-        Girlgrid.DeleteGirl(Tag);
+        TThread.Queue(nil,
+        procedure
+        begin
+      // ora è sicuro modificare FGirls o ricreare le tile
+          Girlgrid.DeleteGirl(Tag);
+        end);
         Deletefile (dirSaves + Tag + '.json');
 
       end,
@@ -280,7 +294,13 @@ begin
     //RecordActivity;
     AGirl.Prive := -1;
     SelectionPrive := -1;
-    GirlGrid.RebuildGrid;
+    TThread.Queue(nil,
+    procedure
+    begin
+  // ora è sicuro modificare FGirls o ricreare le tile
+      GirlGrid.RebuildGrid;
+    end);
+
   end;
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
@@ -330,7 +350,12 @@ begin
           Data.Start := 0;
           SetLength(Data.Activities, 0);
           GirlStorage.SaveGirl(Name, Data);
-          GirlGrid.AddGirl(Name);
+          TThread.Queue(nil,
+          procedure
+          begin
+        // ora è sicuro modificare FGirls o ricreare le tile
+            GirlGrid.AddGirl(Name);
+          end);
           InputGirl.FEdit.Text := '';
         end
         else

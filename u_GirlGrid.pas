@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, Math, Generics.defaults,
   System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects, u_Privgrid,
-  FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
+  FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D,FMX.ani;
 
 type
 
@@ -31,7 +31,6 @@ type
     FGirls: TObjectlist<TGirl>;
 
     MatText: TColorMaterialSource;
-
 
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
@@ -61,7 +60,9 @@ type
     procedure RebuildGrid;
     procedure HighlightAvailableGirls;
     procedure ClearGirlsHighlight;
-  end;
+    procedure StartPulseAll;
+    procedure StopPulseAll;
+      end;
 
 
 implementation
@@ -105,7 +106,6 @@ begin
 
   SetLength(FTiles, FCols, FRows);
   FillChar(FTiles[0,0], SizeOf(TPlane)*FCols*FRows, 0);
-
   RebuildGrid;
 end;
 
@@ -369,13 +369,16 @@ begin
     if Tile = nil then Continue;
 
     if G.Prive = -1 then
-      Tile.MaterialSource := MatHighlight      // libero → evidenziato
+      Tile.MaterialSource := MatHighLight   // libero → evidenziato
     else
-      Tile.MaterialSource := Mat;      // occupato → grigio
-    tile.Repaint;
+      Tile.MaterialSource := Mat;           // occupato → normale
+    Tile.Repaint;
   end;
 
+  // Avvia pulsazione globale
+  StartPulseAll;
 end;
+
 procedure TGirlGrid.ClearGirlsHighlight;
 var
   G: TGirl;
@@ -387,6 +390,42 @@ begin
     if Tile <> nil then
       Tile.MaterialSource := Mat; // torna normale
   end;
+
+  // Ferma pulsazione globale
+  StopPulseAll;
+end;
+
+procedure TGirlGrid.StartPulseAll;
+var
+  Anim: TFloatAnimation;
+begin
+  if FRoot.FindComponent('PulseAll') <> nil then Exit;
+
+  Anim := TFloatAnimation.Create(FRoot);
+  Anim.Name := 'PulseAll';
+  Anim.Parent := FRoot;
+  Anim.PropertyName := 'Scale.X';
+  Anim.StartValue := 1.0;
+  Anim.StopValue := 1.05;   // leggera pulsazione
+  Anim.Duration := 0.6;
+  Anim.AutoReverse := True;
+  Anim.Loop := True;
+  Anim.Enabled := True;
+
+  // Scala Y uguale
+  FRoot.Scale.Y := 1.0;
+end;
+
+procedure TGirlGrid.StopPulseAll;
+var
+  C: TComponent;
+begin
+  C := FRoot.FindComponent('PulseAll');
+  if C <> nil then
+    C.Free;
+
+  FRoot.Scale.X := 1.0;
+  FRoot.Scale.Y := 1.0;
 end;
 end.
 
