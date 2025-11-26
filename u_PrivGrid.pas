@@ -9,9 +9,12 @@ uses
 
 type
   TTileState = (tsOff, tsOn, tsAlarm);
+
   TPrivStatus = class
     State: TTileState;
-    Girls: Array of string;
+    EndTime: TDateTime;     // <--- ora in cui finisce il prive'
+    Duration: Integer;      // <--- minuti totali scelti
+    CountdownText: TText3D; // <--- per mostrare il countdown
   end;
 
   TStateChangedEvent = procedure(Sender: TObject; TileTag: Integer; Data: TPrivStatus) of object;
@@ -35,7 +38,7 @@ type
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    procedure InternalImgMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure InternalSwitchMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
     procedure InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
@@ -55,6 +58,7 @@ type
     procedure SetBasePosition(BaseX, BaseY: Single);
     procedure ToggleTileState(ImgPlane: TPlane);
     function GetTileByTag(Tag: Integer): TPlane;
+    procedure UpdateCountdowns;
   end;
 
 procedure MakeRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor; const Text: string = '');
@@ -179,7 +183,7 @@ begin
       ImgSwitch.MaterialSource := ImgMat;
       ImgSwitch.TagObject := Data;
       ImgSwitch.Tag := Plane.Tag;
-      ImgSwitch.OnMouseDown := InternalImgMouseDown;
+      ImgSwitch.OnMouseDown := InternalSwitchMouseDown;
       ImgSwitch.HitTest := True;
       ImgSwitch.RotationAngle.X := 180;
       ImgSwitch.Cursor := crHandPoint;
@@ -195,12 +199,27 @@ begin
       ImgAdd.MaterialSource := ImgMatAdd;
       ImgAdd.TagObject := Data;
       ImgAdd.Tag := Plane.Tag;
-      ImgAdd.OnMouseDown := InternalImgAddMouseDown;
+      ImgAdd.OnMouseDown := InternalSwitchMouseDown;
       ImgAdd.HitTest := True;
       ImgAdd.RotationAngle.X := 180;
       ImgAdd.Cursor := crHandPoint;
 
-
+// Countdown text
+      Data.CountdownText := TText3D.Create(Plane);
+      Data.CountdownText.Parent := Plane;
+      Data.CountdownText.Font.Size := 8;
+      Data.CountdownText.HorzTextAlign := TTextAlign.Center;
+      Data.CountdownText.VertTextAlign := TTextAlign.Center;
+      Data.CountdownText.MaterialSource := MatText;
+      Data.CountdownText.Depth := 0.01;
+      Data.CountdownText.Scale.X := 0.45;
+      Data.CountdownText.Scale.Y := 0.45;
+      Data.CountdownText.Position.X := (Plane.Width / 2 ) - 5;
+      Data.CountdownText.Position.Y := -(Plane.Height / 2) + 5;
+      Data.CountdownText.Position.Z := 0.06;
+      Data.CountdownText.RotationAngle.X := -180;
+      Data.CountdownText.HitTest := False;
+      Data.CountdownText.Text := '';
       FTiles[X, Y] := Plane;
     end;
 
@@ -249,33 +268,34 @@ begin
     OnTileMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
 end;
 
-procedure TPrivGrid.InternalImgMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TPrivGrid.InternalSwitchMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+var
+  Data: TPrivStatus;
 begin
-  if Sender is TPlane then
+  Data := TPrivStatus(TPlane(Sender).TagObject);
+
+  if Data.State = tsOff then
   begin
-    if  TPrivStatus(TPlane(Sender).TagObject).State = tsOff then
+    SpinDialog.Show(
+    'Durata del Privè (minuti)',
+    procedure(Minuti: Integer)
     begin
-      SpinDialog.Show(
-        'Durata del Privè (minuti)',
-        procedure(Minuti: Integer)
-        begin
-          ToggleTileState(TPlane(Sender));
-          if Assigned(OnSwitchMouseDown) then
-            OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
-  //        ShowMessage('Hai scelto ' + Minuti.ToString + ' minuti');
-        end,
-        procedure
-        begin
-    //      ShowMessage('Annullato');
-        end
-      );
-    end
-    else begin
+      Data.Duration := Minuti;
+      Data.EndTime := Now + (Minuti / 1440); // 1440 = min in 1 giorno
       ToggleTileState(TPlane(Sender));
       if Assigned(OnSwitchMouseDown) then
         OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
-    end;
+    end,
+    procedure
+    begin
+    end
+  );
+  end
+  else begin
+    ToggleTileState(TPlane(Sender));
+    if Assigned(OnSwitchMouseDown) then
+      OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
   end;
 end;
 procedure TPrivGrid.InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
@@ -400,5 +420,48 @@ begin
   if Assigned(OnStateChanged) then
     OnStateChanged(Self, MainTile.Tag, Data);
 end;
+procedure TPrivGrid.UpdateCountdowns;
+var
+  X, Y: Integer;
+  Data: TPrivStatus;
+  NowT: TDateTime;
+  Remaining: TDateTime;
+  Sec: Integer;
+  H, M, S: Integer;
+begin
+  NowT := Now;
+
+  for Y := 0 to FRows - 1 do
+    for X := 0 to FCols - 1 do
+      if Assigned(FTiles[X,Y]) then
+      begin
+        Data := TPrivStatus(FTiles[X,Y].TagObject);
+
+        if Data.State = tsOn then
+        begin
+          Remaining := Data.EndTime - NowT;
+
+          if Remaining <= 0 then
+          begin
+            // PRIVÈ SCADUTO
+            SetTileStateInternal(FTiles[X,Y], tsAlarm);
+            Data.State := tsAlarm;
+            //Data.CountdownText.Text := '00:00:00';
+            Continue;
+          end;
+
+          Sec := Round(Remaining * 86400); // giorni → secondi
+          H := Sec div 3600;
+          M := (Sec div 60) mod 60;
+          S := Sec mod 60;
+
+          Data.CountdownText.Text :=
+            Format('%.2d:%.2d:%.2d',[H,M,S]);
+        end
+        else
+          Data.CountdownText.Text := '';
+      end;
+end;
+
 end.
 

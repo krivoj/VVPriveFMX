@@ -3,8 +3,8 @@ unit u_Dialogs;
 interface
 
 uses
-  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.SpinBox,FMX.Text,
-  FMX.StdCtrls, FMX.Graphics, FMX.Edit;
+  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.Text, FMX.Types3D, System.Math.Vectors,
+  FMX.StdCtrls, FMX.Graphics, FMX.Edit, FMX.Objects3D,FMX.MaterialSources;
 
 type
   TConfirmDialog = class
@@ -48,11 +48,15 @@ type
     FOwner: TComponent;
     FRoot: TLayout;
     FTitle: TLabel;
-    FSpin: TSpinBox;
+    FMinutes: TLabel;
+    FValue: Integer;
     FOnConfirm: TProc<Integer>;
     FOnCancel: TProc;
+    MatAdd, MatSub : TTextureMaterialSource;
     procedure ClickConfirm(Sender: TObject);
     procedure ClickCancel(Sender: TObject);
+    procedure ClickAdd(Sender: TObject);
+    procedure ClickSub(Sender: TObject);
     procedure PaintCancel(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
     procedure PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
   public
@@ -347,7 +351,11 @@ var
   bg, box: TRectangle;
   footer: TLayout;
   ok, cancel: TButton;
+  BtnSub, BtnAdd: TPlane;
+  RS : TResourceStream;
+  ImgSub, ImgAdd: TImage;
 begin
+
   FOwner := AOwner;
 
   FRoot := TLayout.Create(AOwner);
@@ -356,6 +364,16 @@ begin
   FRoot.Visible := False;
   FRoot.HitTest := True;
   FRoot.Opacity := 0.0;
+
+  RS := TResourceStream.Create(HInstance, 'PNGADD2', RT_RCDATA);
+  MatAdd := TTextureMaterialSource.Create(FRoot);
+  MatAdd.Texture.LoadFromStream(RS);
+  RS.Free;
+
+  RS := TResourceStream.Create(HInstance, 'PNGSUB', RT_RCDATA);
+  MatSub := TTextureMaterialSource.Create(FRoot);
+  MatSub.Texture.LoadFromStream(RS);
+  RS.Free;
 
   bg := TRectangle.Create(FRoot);
   bg.Parent := FRoot;
@@ -374,28 +392,52 @@ begin
 
   FTitle := TLabel.Create(box);
   FTitle.Parent := box;
+  FTitle.StyledSettings:=[];
   FTitle.Align := TAlignLayout.Top;
   FTitle.Margins.Top := 20;
-  FTitle.StyledSettings := [];
-  FTitle.TextSettings.Font.Size := 28;
+  //FTitle.AutoSize := False;
+  FTitle.Height := 50;
+  FTitle.TextSettings.Font.Size := 28;  // **questa modifica il font visibile**
   FTitle.TextSettings.Font.Style := [TFontStyle.fsBold];
   FTitle.TextSettings.HorzAlign := TTextAlign.Center;
   FTitle.TextSettings.VertAlign := TTextAlign.Center;
+  FTitle.WordWrap := True;
+  FTitle.TextSettings.WordWrap := True;
 
-  FSpin := TSpinBox.Create(box);
-  FSpin.Parent := box;
-  FSpin.Align := TAlignLayout.Client;
-  FSpin.Margins.Top := 80;
-  FSpin.Margins.Bottom := 80;
 
-  FSpin.Min := 5;
-  FSpin.Max := 180;
-  FSpin.Value := 10;     // default
-  FSpin.ValueType := TNumValueType.Integer;
-  FSpin.Increment := 5;
+  FMinutes := TLabel.Create(box);
+  FMinutes.Parent := box;
+  FMinutes.Align := TAlignLayout.Client;
+  FMinutes.StyledSettings := [];
+  FMinutes.TextSettings.Font.Size := 22;
+  FMinutes.TextSettings.Font.Style := [TFontStyle.fsBold];
+  FMinutes.TextSettings.HorzAlign := TTextAlign.Center;
+  FMinutes.TextSettings.VertAlign := TTextAlign.Center;
+  FMinutes.Scale.X := 10;
+  FMinutes.Scale.Y := 7;
 
-  FSpin.TextSettings.Font.Size := 48;
-  FSpin.TextSettings.HorzAlign := TTextAlign.Center;
+
+  ImgSub := TImage.Create(box);
+  ImgSub.Parent := box;
+  ImgSub.Align := TAlignLayout.Left;
+  ImgSub.Width := 200;
+  ImgSub.Cursor := crHandPoint;
+  ImgSub.HitTest := True;
+  RS := TResourceStream.Create(HInstance, 'PNGSUB', RT_RCDATA);
+  ImgSub.Bitmap.LoadFromStream(RS);
+  RS.Free;
+  ImgSub.OnClick := ClickSub;
+
+  ImgAdd := TImage.Create(box);
+  ImgAdd.Parent := box;
+  ImgAdd.Align := TAlignLayout.Right;
+  ImgAdd.Width := 200;
+  ImgAdd.Cursor := crHandPoint;
+  ImgAdd.HitTest := True;
+  RS := TResourceStream.Create(HInstance, 'PNGADD2', RT_RCDATA);
+  ImgAdd.Bitmap.LoadFromStream(RS);
+  RS.Free;
+  ImgAdd.OnClick := ClickAdd;
 
   footer := TLayout.Create(box);
   footer.Parent := box;
@@ -423,6 +465,9 @@ begin
   ok.OnClick := ClickConfirm;
   ok.StyledSettings := [];
   ok.OnPaint := PaintOk;
+
+  FValue := 10;
+  FMinutes.Text := FValue.ToString ;
 end;
 
 procedure TSpinBoxDialog.Show(const Title: string; OnConfirm: TProc<Integer>; OnCancel: TProc);
@@ -430,6 +475,10 @@ begin
   FTitle.Text := Title;
   FOnConfirm := OnConfirm;
   FOnCancel := OnCancel;
+
+  FValue := 10;
+  FMinutes.Text := FValue.ToString ;
+
   FRoot.Visible := True;
   FRoot.Opacity := 1;
 end;
@@ -442,8 +491,7 @@ end;
 procedure TSpinBoxDialog.ClickConfirm(Sender: TObject);
 begin
   if Assigned(FOnConfirm) then
-    FOnConfirm(Round(FSpin.Value));
-
+    FOnConfirm(FValue);
   Hide;
 end;
 
@@ -488,5 +536,23 @@ begin
   TextRect := ARect;
   Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
 end;
+procedure TSpinBoxDialog.ClickAdd(Sender: TObject);
+begin
+  if FValue < 180 then
+  begin
+    FValue := FValue + 5;
+    if FValue > 180 then FValue := 180;
+    FMinutes.Text := FValue.ToString;
+  end;
+end;
 
+procedure TSpinBoxDialog.ClickSub(Sender: TObject);
+begin
+  if FValue > 10 then
+  begin
+    FValue := FValue - 5;
+    if FValue < 10 then FValue := 10;
+    FMinutes.Text := FValue.ToString;
+  end;
+end;
 end.

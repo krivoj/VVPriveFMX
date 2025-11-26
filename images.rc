@@ -8,4 +8,7 @@ PNGCOLOROFF RCDATA  "coloroff.png"
 PNGCOLORALARM RCDATA  "coloralarm.png"
 PNGSWITCH_ON RCDATA  "switch_on.png"
 PNGSWITCH_OFF RCDATA  "switch_off.png"
+PNGADD2 RCDATA  "add2.png"
+PNGSUB RCDATA  "sub.png"
+
 

@@ -12,11 +12,11 @@ uses
 
 type
   TForm1 = class(TForm)
-    TimerMain: TTimer;
+    TimerPrive: TTimer;
     Viewport3D1: TViewport3D;
     Camera1: TCamera;
     procedure FormCreate(Sender: TObject);
-    procedure TimerMainTimer(Sender: TObject);
+    procedure TimerPriveTimer(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
@@ -148,13 +148,8 @@ begin
   MBorder.MaterialSource := BorderMat;
   MBorder.HitTest := False; // non deve prendere i click
 
-
-  TimerMain := TTimer.Create(Self);
-  TimerMain.Interval := 1000;
-  TimerMain.Enabled := True;
-  TimerMain.OnTimer := TimerMainTimer;
-
   SetupCameraTopView;
+  TimerPrive.Enabled := true;
 end;
 
 procedure TForm1.LoadGirlsList;
@@ -186,10 +181,9 @@ begin
 end;
 
 
-procedure TForm1.TimerMainTimer(Sender: TObject);
-var
-  i: integer;
+procedure TForm1.TimerPriveTimer(Sender: TObject);
 begin
+  PrivGrid.UpdateCountdowns;
 end;
 
 procedure TForm1.FormResize(Sender: TObject);

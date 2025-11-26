@@ -14,8 +14,9 @@ object Form1: TForm1
   OnResize = FormResize
   OnShow = FormShow
   DesignerMasterStyle = 0
-  object TimerMain: TTimer
-    OnTimer = TimerMainTimer
+  object TimerPrive: TTimer
+    Enabled = False
+    OnTimer = TimerPriveTimer
     Left = 576
     Top = 64
   end
