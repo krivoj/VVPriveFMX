@@ -90,7 +90,7 @@ begin
   PrivGrid.SetBasePosition(-8.5,-4);
   PrivGrid.OnTileMouseDown := TileMouseDown;
   PrivGrid.OnSwitchMouseDown := SwitchMouseDown;
-  PrivGrid.OnImgAddMouseDown := ImgAddMouseDown;
+  PrivGrid.OnAddMouseDown := ImgAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
   Girls:= TObjectList<TGirl>.Create(true);

@@ -40,7 +40,7 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
     procedure InternalSwitchMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-    procedure InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure InternalAddMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure SetTileStateInternal(ATile: TPlane; AState: TTileState);
@@ -48,7 +48,7 @@ type
   public
     OnTileMouseDown: TTileMouseDownEvent;
     OnSwitchMouseDown: TTileMouseDownEvent;
-    OnImgAddMouseDown: TTileMouseDownEvent;
+    OnAddMouseDown: TTileMouseDownEvent;
     OnStateChanged: TStateChangedEvent;
     constructor Create(AParent: TViewport3D; Cols, Rows: Integer;
       TileW, TileH, PadX, PadY: Single);
@@ -199,7 +199,7 @@ begin
       ImgAdd.MaterialSource := ImgMatAdd;
       ImgAdd.TagObject := Data;
       ImgAdd.Tag := Plane.Tag;
-      ImgAdd.OnMouseDown := InternalSwitchMouseDown;
+      ImgAdd.OnMouseDown := InternalAddMouseDown;
       ImgAdd.HitTest := True;
       ImgAdd.RotationAngle.X := 180;
       ImgAdd.Cursor := crHandPoint;
@@ -207,17 +207,21 @@ begin
 // Countdown text
       Data.CountdownText := TText3D.Create(Plane);
       Data.CountdownText.Parent := Plane;
+      Data.CountdownText.Width := 40;
+      Data.CountdownText.Height := 40;
       Data.CountdownText.Font.Size := 8;
       Data.CountdownText.HorzTextAlign := TTextAlign.Center;
       Data.CountdownText.VertTextAlign := TTextAlign.Center;
       Data.CountdownText.MaterialSource := MatText;
       Data.CountdownText.Depth := 0.01;
-      Data.CountdownText.Scale.X := 0.45;
-      Data.CountdownText.Scale.Y := 0.45;
-      Data.CountdownText.Position.X := (Plane.Width / 2 ) - 5;
-      Data.CountdownText.Position.Y := -(Plane.Height / 2) + 5;
-      Data.CountdownText.Position.Z := 0.06;
+      Data.CountdownText.Scale.X := 0.08;
+      Data.CountdownText.Scale.Y := 0.08;
+      Data.CountdownText.Position.X := 0;
+      Data.CountdownText.Position.Y := 1.2;
+      Data.CountdownText.Position.Z := 0.01;
       Data.CountdownText.RotationAngle.X := -180;
+      Data.CountdownText.RotationAngle.Y := 0;
+      Data.CountdownText.RotationAngle.Z := 0;
       Data.CountdownText.HitTest := False;
       Data.CountdownText.Text := '';
       FTiles[X, Y] := Plane;
@@ -298,11 +302,11 @@ begin
       OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
   end;
 end;
-procedure TPrivGrid.InternalImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TPrivGrid.InternalAddMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
-    if Assigned(OnImgAddMouseDown) then
-      OnImgAddMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
+    if Assigned(OnAddMouseDown) then
+      OnAddMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
 
 end;
 procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TTileState);
