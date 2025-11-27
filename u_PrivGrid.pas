@@ -30,7 +30,7 @@ type
     FViewport: TViewport3D;
     FRoot: TDummy;
     FTiles: array of array of TPlane;
-
+    FAlarmBlinkState: Boolean; // true = Alarm, false = Neutral
     MatOff, MatOn, MatAlarm: TTextureMaterialSource;
 
     MatText: TColorMaterialSource;
@@ -217,7 +217,7 @@ begin
       Data.CountdownText.Scale.X := 0.08;
       Data.CountdownText.Scale.Y := 0.08;
       Data.CountdownText.Position.X := 0;
-      Data.CountdownText.Position.Y := 1.2;
+      Data.CountdownText.Position.Y := 1;
       Data.CountdownText.Position.Z := 0.01;
       Data.CountdownText.RotationAngle.X := -180;
       Data.CountdownText.RotationAngle.Y := 0;
@@ -399,7 +399,7 @@ begin
       NewColor := TAlphaColorRec.Limegreen;
       StatusText := 'ON';
     end;
-    tsOn: begin
+    tsOn,tsAlarm: begin
       Data.State := tsOff;
       NewColor := TAlphaColorRec.Crimson;
       StatusText := 'OFF';
@@ -447,25 +447,32 @@ begin
 
           if Remaining <= 0 then
           begin
-            // PRIVÈ SCADUTO
+            // PRIVÈ SCADUTO → allarme
             SetTileStateInternal(FTiles[X,Y], tsAlarm);
             Data.State := tsAlarm;
-            //Data.CountdownText.Text := '00:00:00';
-            Continue;
           end;
 
-          Sec := Round(Remaining * 86400); // giorni → secondi
+          Sec := Round(Remaining * 86400);
           H := Sec div 3600;
           M := (Sec div 60) mod 60;
           S := Sec mod 60;
 
-          Data.CountdownText.Text :=
-            Format('%.2d:%.2d:%.2d',[H,M,S]);
+          Data.CountdownText.Text := Format('%.2d:%.2d:%.2d',[H,M,S]);
         end
         else
           Data.CountdownText.Text := '';
+
+        // ---- LAMPEGGIO ALLARME ----
+        if Data.State = tsAlarm then
+        begin
+          FAlarmBlinkState := not FAlarmBlinkState;
+          if FAlarmBlinkState then
+            FTiles[X,Y].MaterialSource := MatAlarm
+          else
+            FTiles[X,Y].MaterialSource := MatOff;
+          FTiles[X,Y].Repaint;
+        end;
       end;
 end;
-
 end.
 

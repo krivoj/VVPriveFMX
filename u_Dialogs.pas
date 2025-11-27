@@ -548,6 +548,10 @@ end;
 
 procedure TSpinBoxDialog.ClickSub(Sender: TObject);
 begin
+  FValue :=1;
+  FMinutes.Text := FValue.ToString;
+  exit;
+
   if FValue > 10 then
   begin
     FValue := FValue - 5;

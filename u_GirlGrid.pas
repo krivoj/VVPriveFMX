@@ -28,7 +28,6 @@ type
     FPrivGrid: TPrivGrid;
     FTiles: array of array of TPlane;
     FGirls: TObjectlist<TGirl>;
-
     MatText: TColorMaterialSource;
 
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
@@ -63,7 +62,7 @@ type
     procedure StartPulseAll;
     procedure StopPulseAll;
     procedure UpdateGrid;
-      end;
+  end;
 
 
 implementation
@@ -455,7 +454,7 @@ begin
       begin
         APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
         if Assigned(APrivPlane) then
-          Plane.Parent := APrivPlane;
+        Plane.Parent := APrivPlane;
         Plane.Position.X := 0;
         Plane.Position.Y := 0;
       end;
