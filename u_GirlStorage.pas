@@ -36,6 +36,7 @@ type
     procedure SaveGirl(const GirlName: string; const Data: TGirlData);
     procedure AddActivity(const GirlName: string; const A: TActivity);
     procedure SetStatus(const GirlName: string; NewPrive: Integer; StartTime: TDateTime);
+    procedure LogActivity(const GirlName: string);
   end;
 
 implementation
@@ -153,6 +154,33 @@ begin
   Data := LoadGirl(GirlName);
   Data.Prive := NewPrive;
   Data.Start := StartTime; // può essere Now o 0
+  SaveGirl(GirlName, Data);
+end;
+procedure TGirlStorage.LogActivity(const GirlName: string);
+var
+  Data: TGirlData;
+  A: TActivity;
+begin
+  // Carico i dati della ragazza
+  Data := LoadGirl(GirlName);
+
+  // Se non è in un privè, non facciamo nulla
+  if Data.Prive = -1 then
+    Exit;
+
+  // Preparo nuova attività
+  A.Prive := Data.Prive;
+  A.Start := Data.Start;
+  A.End_  := Now;   // momento della registrazione
+
+  // Aggiungo l'attività al JSON
+  AddActivity(GirlName, A);
+
+  // Reset dello stato corrente
+  Data.Prive := -1;
+  Data.Start := 0;
+
+  // Salvo il nuovo stato
   SaveGirl(GirlName, Data);
 end;
 end.

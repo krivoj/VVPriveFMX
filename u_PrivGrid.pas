@@ -217,7 +217,7 @@ begin
       Data.CountdownText.Scale.X := 0.08;
       Data.CountdownText.Scale.Y := 0.08;
       Data.CountdownText.Position.X := 0;
-      Data.CountdownText.Position.Y := 1;
+      Data.CountdownText.Position.Y := 0.85;
       Data.CountdownText.Position.Z := 0.01;
       Data.CountdownText.RotationAngle.X := -180;
       Data.CountdownText.RotationAngle.Y := 0;

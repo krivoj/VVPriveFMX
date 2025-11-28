@@ -230,28 +230,12 @@ begin
   // puoi aggiungere logica click 3D se serve
   Caption:= IntTostr(TileTag);
 end;
-procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; Tag: string);
-var
-  AGirl: TGirl;
-begin
-  if SelectionPrive > -1 then
-    begin
-      AGirl := GirlGrid.GetGirl(Tag);
-      if AGirl <> nil then
-      begin
-        AGirl.Prive := SelectionPrive;
-        SelectionPrive := -1;
-
-        GirlGrid.ClearGirlsHighlight;
-        GirlGrid.UpdateGrid;
-      end;
-  end;
-end;
 procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 var
   AGirl : TGirl;
+  AGirlStorage: TGirlStorage;
+  AGirlData: TGirlData;
 begin
   AGirl := GirlGrid.GetGirl( Tag );
   if AGirl.Prive < 0 then begin
@@ -272,12 +256,38 @@ begin
     );
   end
   else begin
-    // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL
-    //RecordActivity;
+    // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL . LogActivity
+    AGirlStorage:= TGirlStorage.Create;
+    AGirlStorage.LogActivity(Tag);   // CHIUDE L’ULTIMA ATTIVITÀ
+    AGirlStorage.Free;
+
     AGirl.Prive := -1;
     SelectionPrive := -1;
+
     GirlGrid.UpdateGrid;
 
+  end;
+end;
+procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; Tag: string);
+var
+  AGirl: TGirl;
+  AGirlStorage: TGirlStorage;
+begin
+  if SelectionPrive > -1 then
+    begin
+      AGirl := GirlGrid.GetGirl(Tag);
+      if AGirl <> nil then
+      begin
+        AGirl.Prive := SelectionPrive;
+        AGirlStorage:= TGirlStorage.Create;
+        AGirlStorage.SetStatus(Tag, SelectionPrive, Now);  // SCRIVE SUBITO SUL FILE
+        AGirlStorage.Free;
+        SelectionPrive := -1;
+
+        GirlGrid.ClearGirlsHighlight;
+        GirlGrid.UpdateGrid;
+      end;
   end;
 end;
 procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
