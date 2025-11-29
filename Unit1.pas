@@ -19,6 +19,7 @@ type
     procedure TimerPriveTimer(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
@@ -152,6 +153,14 @@ begin
   TimerPrive.Enabled := true;
 end;
 
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  Confirm.Free;
+  InputGirl.Free;
+  PrivGrid.Free;
+  //GirlGrid.Free;
+end;
+
 procedure TForm1.LoadGirlsList;
 var
   FileName : string;
@@ -275,6 +284,7 @@ var
   AGirlStorage: TGirlStorage;
 begin
   if SelectionPrive > -1 then
+    // LA RAGAZZA E' NELLA GRIDGIRL , LA MUOVE NEL PRIVE' . LogActivity
     begin
       AGirl := GirlGrid.GetGirl(Tag);
       if AGirl <> nil then

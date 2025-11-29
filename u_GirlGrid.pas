@@ -41,7 +41,7 @@ type
     function GetTileByText(Text: String): TPlane;
   public
     FRoot: TDummy;
-    Mat, MatHighLight: TTextureMaterialSource;
+    Mat, MatHighLight, MatDelete, MatDelete2, MatInfo: TTextureMaterialSource;
 
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
     OnGirlGridImgDeleteMouseDown: TGirlGridMouseDownEvent;
@@ -100,6 +100,20 @@ begin
   MatHighLight.Texture.LoadFromStream(RS);
   RS.Free;
 
+  RS := TResourceStream.Create(HInstance, 'PNGDELETE', RT_RCDATA);
+  MatDelete := TTextureMaterialSource.Create(FViewport);
+  MatDelete.Texture.LoadFromStream(RS);
+  RS.Free;
+
+  RS := TResourceStream.Create(HInstance, 'PNGDELETE2', RT_RCDATA);
+  MatDelete2 := TTextureMaterialSource.Create(FViewport);
+  MatDelete2.Texture.LoadFromStream(RS);
+  RS.Free;
+
+  RS := TResourceStream.Create(HInstance, 'PNGINFO', RT_RCDATA);
+  MatInfo := TTextureMaterialSource.Create(FViewport);
+  MatInfo.Texture.LoadFromStream(RS);
+  RS.Free;
 
   MatText := TColorMaterialSource.Create(FViewport);
   MatText.Color := TAlphaColorRec.White;
@@ -123,6 +137,9 @@ begin
 
 
   Mat.Free;
+  Matdelete.Free;
+  Matdelete2.Free;
+  MatInfo.Free;
   MatHighLight.Free;
   MatText.Free;
   FRoot.DisposeOf;
@@ -134,19 +151,10 @@ var
   col, row, i: Integer;
   Plane: TPlane;
   Txt: TText3D;
-  ImgMatDelete,ImgMatInfo: TTextureMaterialSource;
-  ImgPlaneDelete, ImgPlaneInfo: TPlane;
+  PlaneDelete, PlaneInfo: TPlane;
   RS: TResourceStream;
   APrivPlane: TPlane;
 begin
-  RS := TResourceStream.Create(HInstance, 'PNGDELETE', RT_RCDATA);
-  ImgMatDelete := TTextureMaterialSource.Create(FViewport);
-  ImgMatDelete.Texture.LoadFromStream(RS);
-  RS.Free;
-  RS := TResourceStream.Create(HInstance, 'PNGINFO', RT_RCDATA);
-  ImgMatInfo := TTextureMaterialSource.Create(FViewport);
-  ImgMatInfo.Texture.LoadFromStream(RS);
-  RS.Free;
 
   // Dispose tiles esistenti
   for col := 0 to FCols - 1 do
@@ -211,35 +219,37 @@ begin
       Txt.HitTest := False;
 
 
-      ImgPlaneDelete := TPlane.Create(FViewport);
-      ImgPlaneDelete.Parent := Plane;
-      ImgPlaneDelete.Width := FTileWidth * 0.15;
-      ImgPlaneDelete.Height := FTileHeight * 0.60;
-      ImgPlaneDelete.Position.X := (Plane.Width / 2) - 0.25;
-      ImgPlaneDelete.Position.Y := (Plane.Height / 2) - 0.2 ;
-      ImgPlaneDelete.Position.Z := 0.05;
-      ImgPlaneDelete.MaterialSource := ImgMatdelete;
-      ImgPlaneDelete.TagString := Uppercase(FGirls[i].Name);
-      ImgPlaneDelete.Tag := Plane.Tag;
-      ImgPlaneDelete.OnMouseDown := InternalImgDeleteMouseDown;
-      ImgPlaneDelete.HitTest := True;
-      ImgPlaneDelete.RotationAngle.X := 180;
-      ImgPlaneDelete.Cursor := crHandPoint;
+      PlaneDelete := TPlane.Create(FViewport);
+      PlaneDelete.Parent := Plane;
+      PlaneDelete.TagFloat := 2;
+      PlaneDelete.Width := FTileWidth * 0.15;
+      PlaneDelete.Height := FTileHeight * 0.60;
+      PlaneDelete.Position.X := (Plane.Width / 2) - 0.25;
+      PlaneDelete.Position.Y := (Plane.Height / 2) - 0.2 ;
+      PlaneDelete.Position.Z := 0.05;
+      PlaneDelete.MaterialSource := Matdelete;
+      PlaneDelete.TagString := Uppercase(FGirls[i].Name);
+      PlaneDelete.Tag := Plane.Tag;
+      PlaneDelete.OnMouseDown := InternalImgDeleteMouseDown;
+      PlaneDelete.HitTest := True;
+      PlaneDelete.RotationAngle.X := 180;
+      PlaneDelete.Cursor := crHandPoint;
 
-      ImgPlaneInfo := TPlane.Create(FViewport);
-      ImgPlaneInfo.Parent := Plane;
-      ImgPlaneInfo.Width := FTileWidth * 0.15;
-      ImgPlaneInfo.Height := FTileHeight * 0.60;
-      ImgPlaneInfo.Position.X := -(Plane.Width / 2) + 0.2;
-      ImgPlaneInfo.Position.Y := (Plane.Height / 2) - 0.2 ;
-      ImgPlaneInfo.Position.Z := 0.05;
-      ImgPlaneInfo.MaterialSource := ImgMatInfo;
-      ImgPlaneInfo.TagString := Uppercase(FGirls[i].Name);
-      ImgPlaneInfo.Tag := Plane.Tag;
-      ImgPlaneInfo.OnMouseDown := InternalImgInfoMouseDown;
-      ImgPlaneInfo.HitTest := True;
-      ImgPlaneInfo.RotationAngle.X := 180;
-      ImgPlaneInfo.Cursor := crHandPoint;
+      PlaneInfo := TPlane.Create(FViewport);
+      PlaneInfo.Parent := Plane;
+      PlaneInfo.TagFloat := 1;
+      PlaneInfo.Width := FTileWidth * 0.15;
+      PlaneInfo.Height := FTileHeight * 0.60;
+      PlaneInfo.Position.X := -(Plane.Width / 2) + 0.2;
+      PlaneInfo.Position.Y := (Plane.Height / 2) - 0.2 ;
+      PlaneInfo.Position.Z := 0.05;
+      PlaneInfo.MaterialSource := MatInfo;
+      PlaneInfo.TagString := Uppercase(FGirls[i].Name);
+      PlaneInfo.Tag := Plane.Tag;
+      PlaneInfo.OnMouseDown := InternalImgInfoMouseDown;
+      PlaneInfo.HitTest := True;
+      PlaneInfo.RotationAngle.X := 180;
+      PlaneInfo.Cursor := crHandPoint;
 
 
       Inc(i);
@@ -431,19 +441,21 @@ procedure TGirlGrid.UpdateGrid;
 var
   col, row, i: Integer;
   Plane: TPlane;
-  Txt: TText3D;
+  Child: TFmxObject;
+  PlaneInfo, PlaneDelete: TPlane;
   APrivPlane: TPlane;
 begin
   i := 0;
   for col := FCols - 1 downto 0 do
     for row := 0 to FRows - 1 do
     begin
-      if i >= FGirls.Count then Exit;
+      if i >= FGirls.Count then
+        Exit;
 
       Plane := FTiles[col, row];
       if not Assigned(Plane) then Continue;
 
-      // Aggiorna parent e posizione
+      // ------ Posizionamento base ------
       if FGirls[i].Prive < 0 then
       begin
         Plane.Parent := FRoot;
@@ -454,9 +466,35 @@ begin
       begin
         APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
         if Assigned(APrivPlane) then
-        Plane.Parent := APrivPlane;
-        Plane.Position.X := 0;
-        Plane.Position.Y := 0;
+        begin
+          Plane.Parent := APrivPlane;
+          Plane.Position.X := 0;
+          Plane.Position.Y := 0;
+        end;
+      end;
+
+      // ------ Trovo Info/Delete grazie a TagFloat ------
+      PlaneInfo := nil;
+      PlaneDelete := nil;
+
+      for Child in Plane.Children do
+      begin
+        if Child is TPlane then
+        begin
+          if TPlane(Child).TagFloat = 1 then
+            PlaneInfo := TPlane(Child)
+          else if TPlane(Child).TagFloat = 2 then
+            PlaneDelete := TPlane(Child);
+        end;
+      end;
+
+      // ------ Cambio materiali ------
+      if Assigned(PlaneDelete) then
+      begin
+        if FGirls[i].Prive < 0 then
+          PlaneDelete.MaterialSource := MatDelete     // PNGDELETE
+        else
+          PlaneDelete.MaterialSource := MatDelete2;   // PNGDELETE2
       end;
 
       Inc(i);
