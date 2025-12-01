@@ -29,6 +29,7 @@ object Form1: TForm1
     Size.Height = 726.000000000000000000
     Size.PlatformDefault = False
     UsingDesignCamera = False
+    OnMouseDown = Viewport3D1MouseDown
     object Camera1: TCamera
       AngleOfView = 45.000000000000000000
       Position.Z = -5.000000000000000000

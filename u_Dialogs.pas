@@ -130,6 +130,7 @@ begin
   cancel.OnClick := ClickNo;
   cancel.StyledSettings := [];
   cancel.OnPaint := PaintCancel;
+  cancel.Cursor := CrHandPoint;
 
   ok := TButton.Create(footer);
   ok.Parent := footer;
@@ -140,6 +141,7 @@ begin
   ok.OnClick := ClickYes;
   ok.StyledSettings := [];
   ok.OnPaint := PaintOk;
+  ok.Cursor := CrHandPoint;
 end;
 
 procedure TConfirmDialog.Show(const Msg: string; OnYes, OnNo: TProc);
@@ -272,6 +274,7 @@ begin
   cancel.OnClick := ClickCancel;
   cancel.StyledSettings := [];
   cancel.OnPaint := PaintCancel;
+  cancel.Cursor := CrHandPoint;
 
   ok := TButton.Create(footer);
   ok.Parent := footer;
@@ -282,6 +285,7 @@ begin
   ok.OnClick := ClickConfirm;
   ok.StyledSettings := [];
   ok.OnPaint := PaintOk;
+  ok.Cursor := CrHandPoint;
 end;
 
 procedure TInputDialog.Show(const Title: string; OnConfirm: TProc; OnCancel: TProc);
@@ -455,6 +459,7 @@ begin
   cancel.OnClick := ClickCancel;
   cancel.StyledSettings := [];
   cancel.OnPaint := PaintCancel;
+  cancel.Cursor := CrHandPoint;
 
   ok := TButton.Create(footer);
   ok.Parent := footer;
@@ -465,6 +470,7 @@ begin
   ok.OnClick := ClickConfirm;
   ok.StyledSettings := [];
   ok.OnPaint := PaintOk;
+  ok.Cursor := CrHandPoint;
 
   FValue := 10;
   FMinutes.Text := FValue.ToString ;

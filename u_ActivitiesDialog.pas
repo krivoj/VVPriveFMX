@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types,
   System.Generics.Collections,
-  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls,
+  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes,
   FMX.Objects, FMX.Graphics,
   u_GirlStorage, System.IOUtils, System.DateUtils;
 
@@ -20,7 +20,8 @@ type
 
   TActivitiesDialog = class(TLayout)
   private
-    FPanel: TLayout;
+    FRoot : TLayout;
+    FPanel: TRectangle;
     FList: TListBox;
     FBtnClose: TButton;
     FBtnPrint: TButton;
@@ -28,8 +29,7 @@ type
     FItems: TList<TActivityView>;
     FStorage: TGirlStorage;
 
-    procedure LoadAllActivitiesFromFiles;
-    procedure LoadGirl(const FilePath: string);
+    procedure LoadGirl(const GirlName: string);
     procedure PopulateList;
 
     procedure BtnCloseClick(Sender: TObject);
@@ -38,79 +38,92 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure ShowCentered;
+    procedure ShowCentered(GirlName: String);
   end;
 
 implementation
 
 uses
-  unit1; // per DirSaves
+  Unit1;
 
 { TActivitiesDialog }
 
 constructor TActivitiesDialog.Create(AOwner: TComponent);
 var
-  BG : TRectangle;
+  DarkBG: TRectangle;
+  BtnBar : TLayout;
 begin
   inherited;
 
-  Align := TAlignLayout.Contents;
   HitTest := True;
-  Opacity := 0.0;
-  Visible := True;
+  Align   := TAlignLayout.Contents;
+  Visible := False;
 
   FItems := TList<TActivityView>.Create;
   FStorage := TGirlStorage.Create;
 
-  // Pannello centrale stile tConfirmDialog
-  FPanel := TLayout.Create(Self);
-  FPanel.Parent := Self;
+  // ---------------------------------------------------------
+  // ROOT OVERLAY (come TConfirmDialog)
+  // ---------------------------------------------------------
+  FRoot := TLayout.Create(Self);
+  FRoot.Parent := Self;
+  FRoot.Align := TAlignLayout.Contents;
+  FRoot.HitTest := True;
+
+  // sfondo scuro trasparente
+  DarkBG := TRectangle.Create(FRoot);
+  DarkBG.Parent := FRoot;
+  DarkBG.Align := TAlignLayout.Contents;
+  DarkBG.Fill.Color := $88000000;
+  DarkBG.Stroke.Kind := TBrushKind.None;
+
+  // ---------------------------------------------------------
+  // PANNELLO CENTRALE
+  // ---------------------------------------------------------
+  FPanel := TRectangle.Create(FRoot);
+  FPanel.Parent := FRoot;
+  FPanel.Align := TAlignLayout.Center;
   FPanel.Width := 600;
   FPanel.Height := 600;
-  FPanel.Position.Point :=
-    PointF(
-      (Owner as TControl).Width / 2 - FPanel.Width / 2,
-      (Owner as TControl).Height / 2 - FPanel.Height / 2
-    );
-  FPanel.Padding.Rect := TRectF.Create(20, 20, 20, 20);
-  FPanel.ClipChildren := True;
+  FPanel.Fill.Color := $FF202020;
+  FPanel.XRadius := 18;
+  FPanel.YRadius := 18;
+  FPanel.Stroke.Kind := TBrushKind.None;
+  FPanel.Padding.Rect := TRectF.Create(20,20,20,20);
 
-  // Sfondo scuro arrotondato
-  BG := TRectangle.Create(FPanel);
-  BG.Parent := FPanel;
-  BG.Align := TAlignLayout.Contents;
-  BG.Fill.Color := $FF202020;
-  BG.Stroke.Kind := TBrushKind.None;
-  BG.XRadius := 16;
-  BG.YRadius := 16;
-
-  // Lista attività
+  // ---------------------------------------------------------
+  // LISTA DELLE ATTIVITÀ
+  // ---------------------------------------------------------
   FList := TListBox.Create(FPanel);
   FList.Parent := FPanel;
   FList.Align := TAlignLayout.Client;
   FList.ItemHeight := 50;
-  FList.TextSettings.Font.Size := 15;
-  FList.TextSettings.FontColor := TAlphaColors.White;
+
+  // ---------------------------------------------------------
+  // BARRA BOTTONI IN BASSO
+  // ---------------------------------------------------------
+  BtnBar := TLayout.Create(FPanel);
+  BtnBar.Parent := FPanel;
+  BtnBar.Align := TAlignLayout.Bottom;
+  BtnBar.Height := 100;
 
   // Pulsante stampa
-  FBtnPrint := TButton.Create(FPanel);
-  FBtnPrint.Parent := FPanel;
-  FBtnPrint.Align := TAlignLayout.Bottom;
-  FBtnPrint.Height := 50;
+  FBtnPrint := TButton.Create(BtnBar);
+  FBtnPrint.Parent := BtnBar;
+  FBtnPrint.Align := TAlignLayout.Left;
+  FBtnPrint.Width := 250;
   FBtnPrint.Text := 'Stampa';
   FBtnPrint.OnClick := BtnPrintClick;
+  FBtnPrint.Cursor := CrHandPoint;
 
   // Pulsante chiudi
-  FBtnClose := TButton.Create(FPanel);
-  FBtnClose.Parent := FPanel;
-  FBtnClose.Align := TAlignLayout.Bottom;
-  FBtnClose.Height := 50;
+  FBtnClose := TButton.Create(BtnBar);
+  FBtnClose.Parent := BtnBar;
+  FBtnClose.Align := TAlignLayout.Right;
+  FBtnClose.Width := 250;
   FBtnClose.Text := 'Chiudi';
   FBtnClose.OnClick := BtnCloseClick;
-
-  // Caricamento dati
-  LoadAllActivitiesFromFiles;
-  PopulateList;
+  FBtnClose.Cursor := CrHandPoint;
 end;
 
 destructor TActivitiesDialog.Destroy;
@@ -120,19 +133,26 @@ begin
   inherited;
 end;
 
-procedure TActivitiesDialog.ShowCentered;
+procedure TActivitiesDialog.ShowCentered(GirlName: String);
 begin
+  // Reset lista attività
+  FItems.Clear;
+  FList.Clear;
+
+  // Carica attività della ragazza
+  LoadGirl(GirlName);
+
+  // Popola lista
+  PopulateList;
+
+  // Mostra overlay
+  Visible := True;
   BringToFront;
-  AnimateFloat('Opacity', 1, 0.3);
 end;
 
 procedure TActivitiesDialog.BtnCloseClick(Sender: TObject);
 begin
-  AnimateFloat('Opacity', 0, 0.25,
-    procedure
-    begin
-      Free;
-    end);
+  Visible := False;
 end;
 
 procedure TActivitiesDialog.BtnPrintClick(Sender: TObject);
@@ -147,55 +167,37 @@ begin
     SL.Add('----------------------------------------');
 
     for A in FItems do
-    begin
-      SL.Add(
-        Format(
-          '%s | Prive %d | %s -> %s | Durata: %s',
-          [
-            A.GirlName,
-            A.Prive,
-            DateTimeToStr(A.StartDT),
-            DateTimeToStr(A.EndDT),
-            FormatDateTime('hh:nn:ss', A.Duration.TotalSeconds / 86400)
-          ]
-        )
-      );
-    end;
+      SL.Add(Format('%s | Prive %d | %s -> %s | %s',
+        [
+          A.GirlName,
+          A.Prive,
+          DateTimeToStr(A.StartDT),
+          DateTimeToStr(A.EndDT),
+          FormatDateTime('hh:nn:ss', A.Duration)
+        ]));
 
     OutFile := TPath.Combine(TPath.GetDocumentsPath, 'AttivitaPrive.txt');
     SL.SaveToFile(OutFile);
 
-    ShowMessage('Stampato: ' + OutFile);
   finally
     SL.Free;
   end;
 end;
 
-procedure TActivitiesDialog.LoadAllActivitiesFromFiles;
+procedure TActivitiesDialog.LoadGirl(const GirlName: string);
 var
-  FileName: string;
-begin
-  for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
-    LoadGirl(FileName);
-end;
-
-procedure TActivitiesDialog.LoadGirl(const FilePath: string);
-var
-  GirlName: string;
   Data: TGirlData;
   A: TActivity;
   Item: TActivityView;
 begin
-  GirlName := TPath.GetFileNameWithoutExtension(FilePath);
-
   Data := FStorage.LoadGirl(GirlName);
 
   for A in Data.Activities do
   begin
     Item.GirlName := GirlName;
-    Item.Prive := A.Prive;
-    Item.StartDT := A.Start;
-    Item.EndDT   := A.End_;
+    Item.Prive    := A.Prive;
+    Item.StartDT  := A.Start;
+    Item.EndDT    := A.End_;
     Item.Duration := A.End_ - A.Start;
 
     FItems.Add(Item);
@@ -215,16 +217,14 @@ begin
     LI.Parent := FList;
 
     LI.Text :=
-      Format(
-        '%s | p%d | %s → %s | %s',
-        [
-          I.GirlName,
-          I.Prive,
-          FormatDateTime('dd/mm HH:nn', I.StartDT),
-          FormatDateTime('HH:nn', I.EndDT),
-          FormatDateTime('hh:nn:ss', I.Duration)   // ← durata come TDateTime
-        ]
-      );
+      Format('%s | p%d | %s → %s | %s',
+      [
+        I.GirlName,
+        I.Prive,
+        FormatDateTime('dd/mm HH:nn', I.StartDT),
+        FormatDateTime('HH:nn',        I.EndDT),
+        FormatDateTime('hh:nn:ss',     I.Duration)
+      ]);
 
     LI.Height := 50;
     LI.TextSettings.FontColor := TAlphaColors.White;

@@ -176,12 +176,6 @@ begin
   // Aggiungo l'attività al JSON
   AddActivity(GirlName, A);
 
-  // Reset dello stato corrente
-  Data.Prive := -1;
-  Data.Start := 0;
-
-  // Salvo il nuovo stato
-  SaveGirl(GirlName, Data);
 end;
 end.
 

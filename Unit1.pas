@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,
-  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs,
+  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources,
@@ -20,11 +20,14 @@ type
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
   private
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
     procedure LoadGirlsList;
     procedure SetupCameraTopView;
+    procedure CancelSelectionGirl;
   public
     procedure TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
@@ -35,9 +38,9 @@ type
     procedure OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
     procedure GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
-    procedure GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure GirlGridDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
-    procedure GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure GirlGridInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 
     // Menu click
@@ -54,7 +57,7 @@ var
   FormReady: Boolean;
   DirSaves: string;
   Girls: TObjectList<TGirl>;
-  SelectionPrive: Integer;
+  SelectionGirl: Integer;
 
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
@@ -66,6 +69,8 @@ var
 
   Confirm: TConfirmDialog;
   InputGirl: TInputDialog;
+  AActivitiesDialog: TActivitiesDialog;
+
 implementation
 
 {$R *.fmx}
@@ -77,11 +82,13 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
-  SelectionPrive := -1;
+  SelectionGirl := -1;
 
   FormReady := False;
   Confirm := TConfirmDialog.Create(Self, Self);
   InputGirl := TInputDialog.Create(Self, Self);
+  AActivitiesDialog := TActivitiesDialog.Create(Self);
+
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
@@ -183,8 +190,8 @@ begin
   GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid, Girls );
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
-  GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridImgDeleteMouseDown;
-  GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridImgInfoMouseDown;
+  GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
+  GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridInfoMouseDown;
   GirlGrid.SetBasePosition(9,-2.5);
 
 end;
@@ -193,6 +200,12 @@ end;
 procedure TForm1.TimerPriveTimer(Sender: TObject);
 begin
   PrivGrid.UpdateCountdowns;
+end;
+
+procedure TForm1.Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  CancelSelectionGirl;
 end;
 
 procedure TForm1.FormResize(Sender: TObject);
@@ -221,31 +234,32 @@ end;
 procedure TForm1.TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  Caption:= IntTostr(TileTag);
+    CancelSelectionGirl;
 end;
 procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  Caption:= IntTostr(TileTag);
+    CancelSelectionGirl;
 end;
 procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  SelectionPrive := TileTag;
+  SelectionGirl := TileTag;
   GirlGrid.HighlightAvailableGirls;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; TileTag: Integer; Data: TPrivStatus);
 begin
   // puoi aggiungere logica click 3D se serve
-  Caption:= IntTostr(TileTag);
+
 end;
-procedure TForm1.GirlGridImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TForm1.GirlGridDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 var
   AGirl : TGirl;
   AGirlStorage: TGirlStorage;
-  AGirlData: TGirlData;
 begin
+  CancelSelectionGirl;
+
   AGirl := GirlGrid.GetGirl( Tag );
   if AGirl.Prive < 0 then begin
     if FileExists (dirSaves + Tag + '.json' ) then
@@ -265,15 +279,13 @@ begin
     );
   end
   else begin
+
     // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL . LogActivity
     AGirlStorage:= TGirlStorage.Create;
     AGirlStorage.LogActivity(Tag);   // CHIUDE L’ULTIMA ATTIVITÀ
     AGirlStorage.Free;
-
     AGirl.Prive := -1;
-    SelectionPrive := -1;
-
-    GirlGrid.UpdateGrid;
+    CancelSelectionGirl;
 
   end;
 end;
@@ -283,35 +295,25 @@ var
   AGirl: TGirl;
   AGirlStorage: TGirlStorage;
 begin
-  if SelectionPrive > -1 then
+  if SelectionGirl > -1 then
     // LA RAGAZZA E' NELLA GRIDGIRL , LA MUOVE NEL PRIVE' . LogActivity
     begin
       AGirl := GirlGrid.GetGirl(Tag);
       if AGirl <> nil then
       begin
-        AGirl.Prive := SelectionPrive;
+        AGirl.Prive := SelectionGirl;
         AGirlStorage:= TGirlStorage.Create;
-        AGirlStorage.SetStatus(Tag, SelectionPrive, Now);  // SCRIVE SUBITO SUL FILE
+        AGirlStorage.SetStatus(Tag, SelectionGirl, Now);  // SCRIVE SUBITO SUL FILE
         AGirlStorage.Free;
-        SelectionPrive := -1;
-
-        GirlGrid.ClearGirlsHighlight;
-        GirlGrid.UpdateGrid;
+        CancelSelectionGirl;
       end;
   end;
 end;
-procedure TForm1.GirlGridImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TForm1.GirlGridInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
-var
-  AGirl: TGirlData;
-  GirlStorage: TGirlStorage;
 begin
-  if FileExists (dirSaves + Tag + '.json' ) then
-  begin
-    GirlStorage:= TGirlStorage.Create;
-    AGirl:= GirlStorage.LoadGirl(Tag);
-    GirlStorage.Free;
-  end;
+  CancelSelectionGirl;
+  AActivitiesDialog.ShowCentered ( Tag );
 
 end;
 
@@ -322,6 +324,7 @@ var
   Data: TGirlData;
   Name: string;
 begin
+  CancelSelectionGirl;
   if Girls.Count < MAXGIRLS then
   begin
 
@@ -371,6 +374,13 @@ begin
   else
     ShowMessage('Puoi gestire al massimo ' +  MAXGIRLS.ToString + ' ragazze');
 end;
+procedure TForm1.CancelSelectionGirl;
+begin
 
+  SelectionGirl := -1;
+  GirlGrid.ClearGirlsHighlight;
+  GirlGrid.UpdateGrid;
+
+end;
 end.
 

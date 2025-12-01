@@ -181,6 +181,7 @@ begin
         Plane.Parent := FRoot;
         Plane.Position.X := -((FCols - 1) - col) * (FTileWidth + FPadX);
         Plane.Position.Y := (FRows - 1 - row) * (FTileHeight + FPadY);  // alto -> basso
+        Plane.Position.Z := 0;
       end
       else begin
         // LA RAGAZZA E' IN PRIVE
@@ -188,6 +189,7 @@ begin
         Plane.Parent := APrivPlane;
         Plane.Position.X := 0;
         Plane.Position.Y := 0;
+        Plane.Position.Z := 0.2;
       end;
 
       Plane.HitTest := True;
