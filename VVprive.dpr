@@ -19,7 +19,8 @@ uses
   u_PrivGrid in 'u_PrivGrid.pas',
   u_GirlGrid in 'u_GirlGrid.pas',
   u_GirlStorage in 'u_GirlStorage.pas',
-  u_Dialogs in 'u_Dialogs.pas';
+  u_Dialogs in 'u_Dialogs.pas',
+  u_ActivitiesDialog in 'u_ActivitiesDialog.pas';
 
 {$R *.res}
 
