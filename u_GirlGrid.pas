@@ -17,6 +17,7 @@ type
   public
     Name: string;
     Prive: Integer;
+    Start: TDateTime;
   end;
 
   TGirlGrid = class
@@ -27,7 +28,6 @@ type
     FViewport: TViewport3D;
     FPrivGrid: TPrivGrid;
     FTiles: array of array of TPlane;
-    FGirls: TObjectlist<TGirl>;
     MatText: TColorMaterialSource;
 
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
@@ -42,6 +42,7 @@ type
   public
     FRoot: TDummy;
     Mat, MatHighLight, MatDelete, MatDelete2, MatInfo: TTextureMaterialSource;
+    FGirls: TObjectlist<TGirl>;
 
     OnGirlGridMouseDown: TGirlGridMouseDownEvent;
     OnGirlGridImgDeleteMouseDown: TGirlGridMouseDownEvent;

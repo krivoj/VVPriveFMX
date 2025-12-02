@@ -11,6 +11,7 @@ type
   TTileState = (tsOff, tsOn, tsAlarm);
 
   TPrivStatus = class
+    Number: Integer;
     State: TTileState;
     EndTime: TDateTime;     // <--- ora in cui finisce il prive'
     Duration: Integer;      // <--- minuti totali scelti
@@ -64,7 +65,7 @@ type
 procedure MakeRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor; const Text: string = '');
 
 implementation
-
+uses unit1;
 { TPrivGrid }
 
 constructor TPrivGrid.Create(AParent: TViewport3D; Cols, Rows: Integer;
@@ -129,6 +130,7 @@ begin
     for X := 0 to FCols - 1 do
     begin
       Data := TPrivStatus.Create;
+      Data.Number := TotCells;
       Data.State := tsOff;
 
       Plane := TPlane.Create(FViewport);
@@ -276,11 +278,30 @@ procedure TPrivGrid.InternalSwitchMouseDown(Sender: TObject; Button: TMouseButto
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 var
   Data: TPrivStatus;
+  Child: TFmxObject;
+  FoundGirl: Boolean;
 begin
   Data := TPrivStatus(TPlane(Sender).TagObject);
+  FoundGirl:= False;
 
   if Data.State = tsOff then
   begin
+    //se non ci sono ragazze exit. cerco delle Children girl
+    for Child in TPlane(Sender).Children do
+    begin
+      if Child is TPlane then
+      begin
+        if TPlane(Child).TagString <> '' then
+          begin
+            FoundGirl := True;
+            Break;
+          end;
+      end;
+    end;
+
+    if FoundGirl = False then
+      exit;
+
     SpinDialog.Show(
     'Durata del Privè (minuti)',
     procedure(Minuti: Integer)
@@ -296,7 +317,7 @@ begin
     end
   );
   end
-  else begin
+  else begin // if tsOn, tsAlarm
     ToggleTileState(TPlane(Sender));
     if Assigned(OnSwitchMouseDown) then
       OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
