@@ -27,7 +27,7 @@ type
     PrivGrid: TPrivGrid;
     procedure LoadGirlsList;
     procedure SetupCameraTopView;
-    procedure CancelSelectionGirl;
+    procedure CancelSelectedPrive;
   public
     procedure TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
@@ -57,7 +57,7 @@ var
   FormReady: Boolean;
   DirSaves: string;
   Girls: TObjectList<TGirl>;
-  SelectionGirl: Integer;
+  SelectedPrive: Integer;
 
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
@@ -82,7 +82,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
-  SelectionGirl := -1;
+  SelectedPrive := -1;
 
   FormReady := False;
   Confirm := TConfirmDialog.Create(Self, Self);
@@ -185,11 +185,8 @@ begin
     begin
       Result := CompareText(A.Name, B.Name);  // ordina per Name
     end));
-  Girls.Free;
-  Girls:= TObjectList<TGirl>.Create(true); // la ricreo per sincronizzarla alla girgrid
 
   GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid, Girls );
-  Girls := GirlGrid.FGirls;
 
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
@@ -207,7 +204,7 @@ end;
 procedure TForm1.Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
-  CancelSelectionGirl;
+  CancelSelectedPrive;
 end;
 
 procedure TForm1.FormResize(Sender: TObject);
@@ -236,38 +233,51 @@ end;
 procedure TForm1.TileMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-    CancelSelectionGirl;
+    CancelSelectedPrive;
 end;
 procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-    CancelSelectionGirl;
+    CancelSelectedPrive;
 end;
 procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  SelectionGirl := TileTag;
+  SelectedPrive := TileTag;
   GirlGrid.HighlightAvailableGirls;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; PriveTag: Integer; Data: TPrivStatus);
 var
   I: integer;
+  AGirlStorage: TGirlStorage;
 begin
     case Data.State of
       tsOn: begin
          { per tutte le girl in quel prive' setto start }
         for I := 0 to GirlGrid.FGirls.Count -1 do
           begin
-//            if GirlGrid.FGirls[I].Prive = PriveTag then
-
+            if GirlGrid.FGirls[I].Prive = PriveTag then begin
+              GirlGrid.FGirls[I].Start := Now;
+              AGirlStorage:= TGirlStorage.Create;
+              AGirlStorage.SetStatus(GirlGrid.FGirls[I].Name , PriveTag, Now);  // SCRIVE SUBITO SUL FILE
+              AGirlStorage.Free;
+            end;
           end;
 
       end;
       tsOff: begin
-         { TODO : per tutte le girl LogActivity }
+         {  per tutte le girl in quel prive' LogActivity }
+        for I := 0 to GirlGrid.FGirls.Count -1 do
+          begin
+            if GirlGrid.FGirls[I].Prive = PriveTag then begin
+              AGirlStorage:= TGirlStorage.Create;
+              AGirlStorage.LogActivity(GirlGrid.FGirls[I].Name);   // CHIUDE L’ULTIMA ATTIVITÀ
+              AGirlStorage.Free;
+            end;
+          end;
       end;
     end;
-    CancelSelectionGirl;
+    CancelSelectedPrive;
 end;
 procedure TForm1.GirlGridDeleteMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
@@ -276,7 +286,7 @@ var
   AGirlStorage: TGirlStorage;
   APrive: TPlane;
 begin
-  CancelSelectionGirl;
+  CancelSelectedPrive;
 
   AGirl := GirlGrid.GetGirl( Tag );
   if AGirl.Prive < 0 then begin
@@ -299,7 +309,7 @@ begin
   else begin
            //  lka rimuovi solo a mano. lo status parta con lo switch e non puoi rimuovere a prive in corso
     // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL . LogActivity
-    APrive := PrivGrid.GetTileByTag (AGirl.Prive); //   SE IL PRIVE' è on, oFF O ALARM.
+    APrive := PrivGrid.GetPriveByTag (AGirl.Prive); //   SE IL PRIVE' è on, oFF O ALARM.
     case TPrivStatus (APrive.TagObject).State of
       tsOn,tsAlarm: begin
         AGirlStorage:= TGirlStorage.Create;
@@ -315,7 +325,7 @@ begin
 
   end;
 
-  CancelSelectionGirl;
+  CancelSelectedPrive;
 end;
 procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; Tag: string);
@@ -324,22 +334,20 @@ var
   AGirlStorage: TGirlStorage;
 begin
     // LA RAGAZZA E' NELLA GRIDGIRL , LA MUOVE NEL PRIVE' . LogActivity
-  if SelectionGirl > -1 then
+  if SelectedPrive > -1 then
   begin
     { TODO : se il prive' è on, se off non fa setstatus }
     AGirl := GirlGrid.GetGirl(Tag);
-    AGirl.Prive := SelectionGirl;
-    AGirlStorage:= TGirlStorage.Create;
-    AGirlStorage.SetStatus(Tag, SelectionGirl, Now);  // SCRIVE SUBITO SUL FILE
-    AGirlStorage.Free;
-    CancelSelectionGirl;
+    AGirl.Prive := SelectedPrive;
+    AGirl.Start := 0;
+    CancelSelectedPrive;
   end;
 
 end;
 procedure TForm1.GirlGridInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 begin
-  CancelSelectionGirl;
+  CancelSelectedPrive;
   AActivitiesDialog.ShowCentered ( Tag );
 
 end;
@@ -351,7 +359,7 @@ var
   Data: TGirlData;
   Name: string;
 begin
-  CancelSelectionGirl;
+  CancelSelectedPrive;
   if Girls.Count < MAXGIRLS then
   begin
 
@@ -401,10 +409,10 @@ begin
   else
     ShowMessage('Puoi gestire al massimo ' +  MAXGIRLS.ToString + ' ragazze');
 end;
-procedure TForm1.CancelSelectionGirl;
+procedure TForm1.CancelSelectedPrive;
 begin
 
-  SelectionGirl := -1;
+  SelectedPrive := -1;
   GirlGrid.ClearGirlsHighlight;
   GirlGrid.UpdateGrid;
 

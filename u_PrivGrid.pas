@@ -58,7 +58,7 @@ type
     procedure SetTileState(Col, Row: Integer; State: TTileState);
     procedure SetBasePosition(BaseX, BaseY: Single);
     procedure ToggleTileState(ImgPlane: TPlane);
-    function GetTileByTag(Tag: Integer): TPlane;
+    function GetPriveByTag(Tag: Integer): TPlane;
     procedure UpdateCountdowns;
   end;
 
@@ -351,7 +351,7 @@ begin
   FRoot.Position.Y := BaseY;
 end;
 
-function TPrivGrid.GetTileByTag(Tag: Integer): TPlane;
+function TPrivGrid.GetPriveByTag(Tag: Integer): TPlane;
 var
   X, Y: Integer;
 begin
