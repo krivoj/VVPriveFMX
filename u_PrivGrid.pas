@@ -36,6 +36,7 @@ type
 
     MatText: TColorMaterialSource;
     SpinDialog: TSpinBoxDialog;
+    MessageDialog: TMessageDialog;
     procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
@@ -89,6 +90,7 @@ begin
   FPadX := PadX;
   FPadY := PadY;
   SpinDialog := TSpinBoxDialog.Create(FViewport,FViewport);
+  MessageDialog := TMessageDialog.Create(FViewport,FViewport);
 
   FRoot := TDummy.Create(FViewport);
   FRoot.Parent := FViewport;
@@ -241,6 +243,7 @@ begin
       FTiles[X, Y].DisposeOf;
 
   SpinDialog.Free;
+  MessageDialog.Free;
   MatOff.Free;
   MatOn.Free;
   MatAlarm.Free;
@@ -279,28 +282,18 @@ procedure TPrivGrid.InternalSwitchMouseDown(Sender: TObject; Button: TMouseButto
 var
   Data: TPrivStatus;
   Child: TFmxObject;
-  FoundGirl: Boolean;
 begin
   Data := TPrivStatus(TPlane(Sender).TagObject);
-  FoundGirl:= False;
+
 
   if Data.State = tsOff then
   begin
-    //se non ci sono ragazze exit. cerco delle Children girl
-    for Child in TPlane(Sender).Children do
-    begin
-      if Child is TPlane then
-      begin
-        if TPlane(Child).TagString <> '' then
-          begin
-            FoundGirl := True;
-            Break;
-          end;
-      end;
-    end;
-
-    if FoundGirl = False then
+    //se non ci sono ragazze exit.
+    GetGirlsByPrive( TPlane(Sender).Tag , TmpPriveGirls );
+    if TmpPriveGirls.Count = 0 then begin
+      MessageDialog.Show('Nel privè non sono presenti ragazze.');
       exit;
+    end;
 
     SpinDialog.Show(
     'Durata del Privè (minuti)',
@@ -437,7 +430,7 @@ begin
   MakeRoundedBitmap(ImgMat.Texture, NewColor, StatusText);
 
   // Aggiorna il tile principale
-  MainTile := GetTileByTag(ImgPlane.Tag);
+  MainTile := GetPriveByTag(ImgPlane.Tag);
   if Assigned(MainTile) then
     SetTileStateInternal(MainTile, Data.State);
 

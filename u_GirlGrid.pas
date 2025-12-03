@@ -186,7 +186,7 @@ begin
       end
       else begin
         // LA RAGAZZA E' IN PRIVE
-        APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
+        APrivPlane := FPrivGrid.GetPriveByTag(FGirls[i].Prive);
         Plane.Parent := APrivPlane;
         Plane.Position.X := 0;
         Plane.Position.Y := 0;
@@ -467,7 +467,7 @@ begin
       end
       else
       begin
-        APrivPlane := FPrivGrid.GetTileByTag(FGirls[i].Prive);
+        APrivPlane := FPrivGrid.GetPriveByTag(FGirls[i].Prive);
         if Assigned(APrivPlane) then
         begin
           Plane.Parent := APrivPlane;

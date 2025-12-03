@@ -50,6 +50,7 @@ type
 
 
   end;
+    procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 
 const MAXGIRLS = 40;
 var
@@ -57,6 +58,7 @@ var
   FormReady: Boolean;
   DirSaves: string;
   Girls: TObjectList<TGirl>;
+  TmpPriveGirls: TObjectList<TGirl>;
   SelectedPrive: Integer;
 
   MatMenu : TColorMaterialSource;
@@ -102,6 +104,7 @@ begin
   PrivGrid.OnStateChanged := OnStateChanged;
 
   LoadGirlsList; // GirlGrid
+
 
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
   MatMenuText.Color := TAlphaColorRec.Yellow;
@@ -161,6 +164,7 @@ end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
+  TmpPriveGirls.Free;
   Confirm.Free;
   InputGirl.Free;
   PrivGrid.Free;
@@ -192,6 +196,8 @@ begin
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
   GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridInfoMouseDown;
   GirlGrid.SetBasePosition(9,-2.5);
+
+  TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
 
 end;
 
@@ -243,8 +249,17 @@ end;
 procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
-  SelectedPrive := TileTag;
-  GirlGrid.HighlightAvailableGirls;
+  if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
+    SelectedPrive := TileTag;
+    GirlGrid.HighlightAvailableGirls;
+  end
+  else begin
+    { non puoi aggiungere ragazze ad un privè in corso }
+    GetGirlsByPrive ( TileTag, TmpPriveGirls );
+    if TmpPriveGirls.Count > 0 then
+
+
+  end;
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; PriveTag: Integer; Data: TPrivStatus);
 var
@@ -307,7 +322,6 @@ begin
     );
   end
   else begin
-           //  lka rimuovi solo a mano. lo status parta con lo switch e non puoi rimuovere a prive in corso
     // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL . LogActivity
     APrive := PrivGrid.GetPriveByTag (AGirl.Prive); //   SE IL PRIVE' è on, oFF O ALARM.
     case TPrivStatus (APrive.TagObject).State of
@@ -417,5 +431,18 @@ begin
   GirlGrid.UpdateGrid;
 
 end;
+procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
+var
+  i: integer;
+begin
+  PriveGirls.Clear;
+  for I := 0 to Girls.Count -1 do
+  begin
+    if Girls[I].Prive = PriveTag then
+      PriveGirls.Add(Girls[i]);
+  end;
+
+end;
+
 end.
 

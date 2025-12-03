@@ -65,7 +65,20 @@ type
     procedure Hide;
   end;
 
-
+type
+  TMessageDialog = class
+    private
+      FOwner: TComponent;
+      FRoot: TLayout;
+      FTitle: TLabel;
+      FOnOk: TProc;
+      procedure ClickOk(Sender: TObject);
+      procedure PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+    public
+      constructor Create(AOwner: TComponent; AParent: TFmxObject);
+      procedure Show(const Msg: string; OnOk: TProc = nil);
+      procedure Hide;
+  end;
 implementation
 
 { TConfirmDialog }
@@ -564,5 +577,104 @@ begin
     if FValue < 10 then FValue := 10;
     FMinutes.Text := FValue.ToString;
   end;
+end;
+{ ================================
+  TMessageDialog
+  ================================ }
+
+constructor TMessageDialog.Create(AOwner: TComponent; AParent: TFmxObject);
+var
+  bg, box: TRectangle;
+  footer: TLayout;
+  ok: TButton;
+begin
+  FOwner := AOwner;
+
+  FRoot := TLayout.Create(AOwner);
+  FRoot.Parent := AParent;
+  FRoot.Align := TAlignLayout.Contents;
+  FRoot.Visible := False;
+  FRoot.HitTest := True;
+  FRoot.Opacity := 0.0;
+
+  bg := TRectangle.Create(FRoot);
+  bg.Parent := FRoot;
+  bg.Align := TAlignLayout.Contents;
+  bg.Fill.Color := $88000000;
+  bg.Stroke.Kind := TBrushKind.None;
+
+  box := TRectangle.Create(FRoot);
+  box.Parent := FRoot;
+  box.Align := TAlignLayout.Center;
+  box.Width := 800;
+  box.Height := 260;
+  box.XRadius := 20;
+  box.YRadius := 20;
+  box.Fill.Color := $FFFFFFFF;
+
+  FTitle := TLabel.Create(box);
+  FTitle.Parent := box;
+  FTitle.StyledSettings:=[];
+  FTitle.Align := TAlignLayout.Client;
+  FTitle.Margins.Top := 20;
+  FTitle.Margins.Bottom := 20;
+  FTitle.TextSettings.Font.Size := 28;
+  FTitle.TextSettings.Font.Style := [TFontStyle.fsBold];
+  FTitle.TextSettings.HorzAlign := TTextAlign.Center;
+  FTitle.TextSettings.VertAlign := TTextAlign.Center;
+  FTitle.WordWrap := True;
+  FTitle.TextSettings.WordWrap := True;
+
+  footer := TLayout.Create(box);
+  footer.Parent := box;
+  footer.Align := TAlignLayout.Bottom;
+  footer.Height := 80;
+  footer.Padding.Left := 20;
+  footer.Padding.Right := 20;
+
+  // --- UNICO BOTTONE OK, CENTRATO E LARGEZZA FULL ---
+  ok := TButton.Create(footer);
+  ok.Parent := footer;
+  ok.Align := TAlignLayout.Contents;
+  ok.Margins.Left := 10;
+  ok.Margins.Right := 10;
+  ok.Margins.Bottom := 10;
+  ok.Text := 'OK';
+  ok.StyledSettings := [];
+  ok.OnClick := ClickOk;
+  ok.OnPaint := PaintOk;
+  ok.Cursor := CrHandPoint;
+end;
+
+procedure TMessageDialog.Show(const Msg: string; OnOk: TProc);
+begin
+  FTitle.Text := Msg;
+  FOnOk := OnOk;
+  FRoot.Visible := True;
+  FRoot.Opacity := 1;
+end;
+
+procedure TMessageDialog.Hide;
+begin
+  FRoot.Visible := False;
+end;
+
+procedure TMessageDialog.ClickOk(Sender: TObject);
+begin
+  if Assigned(FOnOk) then FOnOk();
+  Hide;
+end;
+
+procedure TMessageDialog.PaintOk(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+var Btn: TButton; TextRect: TRectF;
+begin
+  Btn := Sender as TButton;
+  Canvas.Fill.Color := $FFCCFFCC; // verde chiaro come "SI"
+  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
+  Canvas.Fill.Color := $FF000000;
+  Canvas.Font.Size := 24;
+  Canvas.Font.Style := [TFontStyle.fsBold];
+  TextRect := ARect;
+  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
 end;
 end.
