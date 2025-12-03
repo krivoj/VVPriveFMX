@@ -16,10 +16,10 @@ type
     Viewport3D1: TViewport3D;
     Camera1: TCamera;
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure TimerPriveTimer(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
   private
@@ -33,7 +33,7 @@ type
     Shift: TShiftState; TileTag: Integer);
     procedure SwitchMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
-    procedure ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure PriveAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
     procedure OnStateChanged(Sender: TObject; PriveTag: Integer; Data: TPrivStatus);
     procedure GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
@@ -72,6 +72,7 @@ var
   Confirm: TConfirmDialog;
   InputGirl: TInputDialog;
   AActivitiesDialog: TActivitiesDialog;
+  MessageDialog: TMessageDialog;
 
 implementation
 
@@ -90,7 +91,7 @@ begin
   Confirm := TConfirmDialog.Create(Self, Self);
   InputGirl := TInputDialog.Create(Self, Self);
   AActivitiesDialog := TActivitiesDialog.Create(Self);
-
+  MessageDialog:= TMessageDialog.Create(self,self);
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
@@ -100,7 +101,7 @@ begin
   PrivGrid.SetBasePosition(-8.5,-4);
   PrivGrid.OnTileMouseDown := TileMouseDown;
   PrivGrid.OnSwitchMouseDown := SwitchMouseDown;
-  PrivGrid.OnAddMouseDown := ImgAddMouseDown;
+  PrivGrid.OnAddMouseDown := PriveAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
   LoadGirlsList; // GirlGrid
@@ -167,6 +168,7 @@ begin
   TmpPriveGirls.Free;
   Confirm.Free;
   InputGirl.Free;
+  MessageDialog.Free;
   PrivGrid.Free;
   //GirlGrid.Free;
 end;
@@ -246,7 +248,7 @@ procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
 begin
     CancelSelectedPrive;
 end;
-procedure TForm1.ImgAddMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TForm1.PriveAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
   if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
@@ -322,17 +324,13 @@ begin
     );
   end
   else begin
-    // LA RAGAZZA E' IN PRIVE' , LA MUOVE NELLA GRIDGIRL . LogActivity
-    APrive := PrivGrid.GetPriveByTag (AGirl.Prive); //   SE IL PRIVE' è on, oFF O ALARM.
+    // LA RAGAZZA E' IN PRIVE', NON PUO' ESSERE RIMOSSA
     case TPrivStatus (APrive.TagObject).State of
       tsOn,tsAlarm: begin
-        AGirlStorage:= TGirlStorage.Create;
-        AGirlStorage.LogActivity(Tag);   // CHIUDE L’ULTIMA ATTIVITÀ
-        AGirlStorage.Free;
-        AGirl.Prive := -1;
+        MessageDialog.Show( 'Non puoi rimuovere una ragzza se Il privè è in corso.' );
       end;
       tsOff: begin
-        AGirl.Prive := -1;
+        AGirl.Prive := -1; // la rimette enlla GirlGrid
       end;
 
     end;
