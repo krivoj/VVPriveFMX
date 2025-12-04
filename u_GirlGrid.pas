@@ -38,7 +38,7 @@ type
     procedure InternalImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
-    function GetTileByText(Text: String): TPlane;
+    function GetTileByGirlName(Text: String): TPlane;
   public
     FRoot: TDummy;
     Mat, MatHighLight, MatDelete, MatDelete2, MatInfo: TTextureMaterialSource;
@@ -360,7 +360,7 @@ begin
 
   Result := Default(TGirl);
 end;
-function TGirlGrid.GetTileByText(Text: String): TPlane;
+function TGirlGrid.GetTileByGirlName(Text: String): TPlane;
 var
   X, Y: Integer;
 begin
@@ -380,7 +380,7 @@ var
 begin
   for G in FGirls do
   begin
-    Tile := GetTileByText(G.Name);
+    Tile := GetTileByGirlName(G.Name);
     if Tile = nil then Continue;
 
     if G.Prive = -1 then
@@ -401,7 +401,7 @@ var
 begin
   for G in FGirls do
   begin
-    Tile := GetTileByText(G.Name);
+    Tile := GetTileByGirlName(G.Name);
     if Tile <> nil then
       Tile.MaterialSource := Mat; // torna normale
   end;

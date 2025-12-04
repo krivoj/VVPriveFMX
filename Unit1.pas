@@ -47,11 +47,13 @@ type
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
+    function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
 
 
   end;
 
 const MAXGIRLS = 40;
+const MAXGIRLSPRIVE = 4;
 var
   Form1: TForm1;
   FormReady: Boolean;
@@ -221,20 +223,20 @@ procedure TForm1.SwitchMouseDown(Sender: TObject; Button: TMouseButton;
 begin
     CancelSelectedPrive;
 end;
+
 procedure TForm1.PriveAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
+
   if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
     SelectedPrive := TileTag;
     GirlGrid.HighlightAvailableGirls;
   end
-  else begin
-    { non puoi aggiungere ragazze ad un privè in corso }
-    GetGirlsByPrive ( TileTag, TmpPriveGirls );
-    if TmpPriveGirls.Count > 0 then
-
-
+  else if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
+  begin
+    MessageDialog.Show( 'Non puoi aggiungere una ragzza se il privè è attivo.' );
   end;
+
 end;
 procedure TForm1.OnStateChanged(Sender: TObject; PriveTag: Integer; Data: TPrivStatus);
 var
@@ -300,7 +302,7 @@ begin
     APrive := PrivGrid.GetPriveByTag(AGirl.Prive);
     case TPrivStatus (APrive.TagObject).State of
       tsOn,tsAlarm: begin
-        MessageDialog.Show( 'Non puoi rimuovere una ragzza se il privè è in corso.' );
+        MessageDialog.Show( 'Non puoi rimuovere una ragzza se il privè è attivo.' );
       end;
       tsOff: begin
         AGirl.Prive := -1; // la rimette enlla GirlGrid
@@ -323,14 +325,29 @@ procedure TForm1.GirlGridMouseDown(Sender: TObject; Button: TMouseButton;
 var
   AGirl: TGirl;
   AGirlStorage: TGirlStorage;
+  APrive: TPlane;
 begin
     // LA RAGAZZA E' NELLA GRIDGIRL , LA MUOVE NEL PRIVE' . LogActivity
   if SelectedPrive > -1 then
   begin
-    { TODO : se il prive' è on, se off non fa setstatus }
+    APrive:= PrivGrid.GetPriveByTag( SelectedPrive );
     AGirl := GirlGrid.GetGirl(Tag);
-    AGirl.Prive := SelectedPrive;
-    AGirl.Start := 0;
+
+    case TPrivStatus(APrive).State of
+      tsOn, tsAlarm: begin
+       { non puoi aggiungere ragazze ad un privè in corso }
+       { il check è già avvenuto in PriveAddMouseDown }
+
+      end;
+      tsOff: begin
+        if GetGirlsCountByPrive ( SelectedPrive ) < MAXGIRLSPRIVE then begin
+          AGirl.Prive := SelectedPrive;
+          AGirl.Start := 0; // lo start lo setta lo Switch
+        end
+        else MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' in un privè.') ;
+      end;
+    end;
+
     CancelSelectedPrive;
   end;
 
@@ -417,6 +434,18 @@ begin
   begin
     if GirlGrid.FGirls[I].Prive = PriveTag then
       PriveGirls.Add(GirlGrid.FGirls[I]);
+  end;
+
+end;
+function TForm1.GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
+var
+  i: integer;
+begin
+  Result:= 0;
+  for I := 0 to GirlGrid.FGirls.Count -1 do
+  begin
+    if GirlGrid.FGirls[I].Prive = PriveTag then
+      Result := Result + 1;
   end;
 
 end;
