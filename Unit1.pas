@@ -25,7 +25,6 @@ type
   private
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
-    procedure LoadGirlsList;
     procedure SetupCameraTopView;
     procedure CancelSelectedPrive;
   public
@@ -47,10 +46,10 @@ type
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
+    procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 
 
   end;
-    procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 
 const MAXGIRLS = 40;
 var
@@ -104,7 +103,13 @@ begin
   PrivGrid.OnAddMouseDown := PriveAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
-  LoadGirlsList; // GirlGrid
+  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid );
+  GirlGrid.LoadfromFiles;
+  GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
+  GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
+  GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridInfoMouseDown;
+  GirlGrid.SetBasePosition(9,-2.5);
+  TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
 
 
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
@@ -172,37 +177,6 @@ begin
   PrivGrid.Free;
   //GirlGrid.Free;
 end;
-
-procedure TForm1.LoadGirlsList;
-var
-  FileName : string;
-  AGirl : TGirl;
-begin
-  Girls:= TObjectList<TGirl>.Create(true);
-    for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
-      begin
-        AGirl := TGirl.Create;
-        AGirl.Name := Uppercase(System.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
-        AGirl.Prive := -1;
-        Girls.Add(AGirl);
-      end;
-  Girls.Sort(TComparer<TGirl>.Construct(
-    function(const A, B: TGirl): Integer
-    begin
-      Result := CompareText(A.Name, B.Name);  // ordina per Name
-    end));
-
-  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid, Girls );
-
-  GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
-  GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
-  GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridInfoMouseDown;
-  GirlGrid.SetBasePosition(9,-2.5);
-
-  TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
-
-end;
-
 
 procedure TForm1.TimerPriveTimer(Sender: TObject);
 begin
@@ -304,8 +278,8 @@ var
   APrive: TPlane;
 begin
   CancelSelectedPrive;
-
   AGirl := GirlGrid.GetGirl( Tag );
+
   if AGirl.Prive < 0 then begin
     if FileExists (dirSaves + Tag + '.json' ) then
     Confirm.Show(
@@ -323,11 +297,11 @@ begin
       end
     );
   end
-  else begin
-    // LA RAGAZZA E' IN PRIVE', NON PUO' ESSERE RIMOSSA
+  else begin  // LA RAGAZZA E' IN PRIVE' (AGirl.Prive >= 0) , NON PUO' ESSERE RIMOSSA
+    APrive := PrivGrid.GetPriveByTag(AGirl.Prive);
     case TPrivStatus (APrive.TagObject).State of
       tsOn,tsAlarm: begin
-        MessageDialog.Show( 'Non puoi rimuovere una ragzza se Il privè è in corso.' );
+        MessageDialog.Show( 'Non puoi rimuovere una ragzza se il privè è in corso.' );
       end;
       tsOff: begin
         AGirl.Prive := -1; // la rimette enlla GirlGrid
@@ -429,14 +403,14 @@ begin
   GirlGrid.UpdateGrid;
 
 end;
-procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
+procedure TForm1.GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 var
   i: integer;
 begin
   PriveGirls.Clear;
   for I := 0 to Girls.Count -1 do
   begin
-    if Girls[I].Prive = PriveTag then
+    if GirlGrid.FGirls[I].Prive = PriveTag then
       PriveGirls.Add(Girls[i]);
   end;
 

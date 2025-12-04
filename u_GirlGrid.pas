@@ -3,9 +3,9 @@
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, Math, Generics.defaults,
-  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects, u_Privgrid,
-  FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D,FMX.ani;
+  System.SysUtils, System.Types, System.UITypes, System.Classes, Math, Generics.defaults,System.IOUtils,
+  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects, u_Privgrid,u_GirlStorage,
+  FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D, FMX.Ani;
 
 type
 
@@ -49,7 +49,7 @@ type
     OnGirlGridImgInfoMouseDown: TGirlGridMouseDownEvent;
 
     constructor Create(AParent: TViewport3D;
-      TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid;  const LstGirls: TObjectlist<TGirl>);
+      TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid);
     destructor Destroy; override;
     procedure SetBasePosition(BaseX, BaseY: Single);
 
@@ -57,6 +57,7 @@ type
     procedure DeleteGirl(const GirlName: string);
     function IndexOfGirl(const AGirlName: string): Integer;
     function GetGirl(const AGirlName: string): TGirl;
+    procedure LoadfromFiles;
     procedure RebuildGrid;
     procedure HighlightAvailableGirls;
     procedure ClearGirlsHighlight;
@@ -67,18 +68,19 @@ type
 
 
 implementation
-
+Uses unit1;
 { TGirlGrid }
 
 constructor TGirlGrid.Create(AParent: TViewport3D;
-  TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid; const LstGirls: TObjectlist<TGirl>);
+  TileW, TileH, PadX, PadY: Single; const PrivGrid:TPrivGrid);
 var
   RS : TResourceStream;
 begin
 
   inherited Create;
   FViewport := AParent;
-  FGirls :=  LstGirls;
+  FGirls := TObjectlist<TGirl>.Create(true);
+//  FGirls :=  LstGirls;
   FPrivGrid := PrivGrid;
   // Griglia fissa
   FCols := 2;
@@ -503,6 +505,31 @@ begin
       Inc(i);
     end;
 end;
+procedure TGirlGrid.LoadFromFiles;
+var
+  FileName : string;
+  AGirl : TGirl;
+  AGirlStorage: TGirlStorage;
+  GirlData: TGirlData;
+begin
+    for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
+      begin
+        AGirl := TGirl.Create;
+        AGirl.Name := Uppercase(System.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
+        // TgirlStorage per sapere dove mettere le girl e se aprire o no i prive
+        AGirlStorage:= TGirlStorage.Create;
+        GirlData := AGirlStorage.LoadGirl( AGirl.Name );
+        AGirl.Prive := GirlData.Prive;
+        AGirl.Start := GirlData.Start;
+        FGirls.Add(AGirl);
+      end;
+  FGirls.Sort(TComparer<TGirl>.Construct(
+    function(const A, B: TGirl): Integer
+    begin
+      Result := CompareText(A.Name, B.Name);  // ordina per Name
+    end));
 
+  ReBuildGrid;
+end;
 end.
 

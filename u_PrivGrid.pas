@@ -289,9 +289,11 @@ begin
   if Data.State = tsOff then
   begin
     //se non ci sono ragazze exit.
-    GetGirlsByPrive( TPlane(Sender).Tag , TmpPriveGirls );
+    form1.GetGirlsByPrive( TPlane(Sender).Tag , TmpPriveGirls );
     if TmpPriveGirls.Count = 0 then begin
       MessageDialog.Show('Nel privè non sono presenti ragazze.');
+      if Assigned(OnSwitchMouseDown) then
+        OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
       exit;
     end;
 
