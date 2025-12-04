@@ -56,7 +56,6 @@ var
   Form1: TForm1;
   FormReady: Boolean;
   DirSaves: string;
-  Girls: TObjectList<TGirl>;
   TmpPriveGirls: TObjectList<TGirl>;
   SelectedPrive: Integer;
 
@@ -305,6 +304,12 @@ begin
       end;
       tsOff: begin
         AGirl.Prive := -1; // la rimette enlla GirlGrid
+        AGirl.Start := 0;
+        AGirlStorage:= TGirlStorage.Create;
+        AGirlStorage.SetStatus( AGirl.Name, -1, 0 );
+        AGirlStorage.Free;
+        GirlGrid.UpdateGrid;
+
       end;
 
     end;
@@ -346,7 +351,7 @@ var
   Name: string;
 begin
   CancelSelectedPrive;
-  if Girls.Count < MAXGIRLS then
+  if GirlGrid.FGirls.Count < MAXGIRLS then
   begin
 
     InputGirl.Show(
@@ -408,10 +413,10 @@ var
   i: integer;
 begin
   PriveGirls.Clear;
-  for I := 0 to Girls.Count -1 do
+  for I := 0 to GirlGrid.FGirls.Count -1 do
   begin
     if GirlGrid.FGirls[I].Prive = PriveTag then
-      PriveGirls.Add(Girls[i]);
+      PriveGirls.Add(GirlGrid.FGirls[I]);
   end;
 
 end;
