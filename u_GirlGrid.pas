@@ -178,7 +178,7 @@ begin
       Plane.Width := FTileWidth;
       Plane.Height := FTileHeight;
       Plane.MaterialSource := Mat;
-      Plane.Depth := 0.02;
+      Plane.Depth := 0.03;
       if FGirls[i].Prive < 0 then
       begin
         Plane.Parent := FRoot;
@@ -221,6 +221,7 @@ begin
       Txt.Stretch := False;
       Txt.Position.Z := 0.05;
       Txt.RotationAngle.X := -180;
+      Txt.Position.Z := 0.05;
       Txt.HitTest := False;
 
 
@@ -402,8 +403,9 @@ begin
   for G in FGirls do
   begin
     Tile := GetTileByGirlName(G.Name);
-    if Tile <> nil then
+    if Tile = nil then continue;
       Tile.MaterialSource := Mat; // torna normale
+    Tile.Repaint;
   end;
 
   // Ferma pulsazione globale

@@ -7,8 +7,8 @@ uses
   System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
-  FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources,
-  FMX.Types, System.Generics.Collections, Math, FMX.Effects;
+  FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources, FMX.Types3d, system.Math,
+  FMX.Types, System.Generics.Collections,  FMX.Effects;
 
 type
   TForm1 = class(TForm)
@@ -51,6 +51,12 @@ type
 
 
   end;
+  function CreateBlinkingText3D(
+    const AOwner: TFmxObject;       // es: Viewport3D
+    const TextStr: string;
+    const Pos: TVector3D;
+    const FontSize: Single = 12
+  ): TText3D;
 
 const MAXGIRLS = 40;
 const MAXGIRLSPRIVE = 4;
@@ -60,6 +66,7 @@ var
   DirSaves: string;
   TmpPriveGirls: TObjectList<TGirl>;
   SelectedPrive: Integer;
+  TxtSelGirl: TText3d;
 
   MatMenu : TColorMaterialSource;
   PlaneAddGirl: TPlane;
@@ -101,6 +108,7 @@ begin
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
 
+
   // Crea grid privè 6x4
   PrivGrid := TPrivGrid.Create(Viewport3D1,  5, 3, 3,4,0.05,0.05);
   PrivGrid.SetBasePosition(-8.5,-4);
@@ -109,7 +117,7 @@ begin
   PrivGrid.OnAddMouseDown := PriveAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
 
-  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.4,  0.02,0.02, PrivGrid );
+  GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.42,  0.02,0.02, PrivGrid );
   GirlGrid.LoadfromFiles;
   GirlGrid.OnGirlGridMouseDown := GirlGridMouseDown;
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
@@ -136,6 +144,9 @@ begin
 
   MatMenu := TColorMaterialSource.Create(Viewport3D1);
   MatMenu.Color := TAlphaColorRec.Black;
+
+//  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
+  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'ABC', Vector3D(8,-3.5,0), 12);
 
   PlaneAddGirl := TPlane.Create(Viewport3D1);
   PlaneAddGirl.Parent := Viewport3D1;
@@ -479,6 +490,56 @@ begin
       Result := Result + 1;
   end;
 
+end;
+
+function CreateBlinkingText3D(
+  const AOwner: TFmxObject;       // es: Viewport3D
+  const TextStr: string;
+  const Pos: TVector3D;
+  const FontSize: Single = 12
+): TText3D;
+var
+  Txt: TText3D;
+  Anim: TFloatAnimation;
+begin
+  // ------------------------
+  // Creazione del testo
+  // ------------------------
+  Txt := TText3D.Create(AOwner);
+  Txt.Parent := AOwner;
+  Txt.Text := TextStr;
+  Txt.Position.Point := Pos;
+
+  Txt.Font.Size := FontSize;
+  Txt.HorzTextAlign := TTextAlign.Center;
+  Txt.VertTextAlign := TTextAlign.Center;
+  Txt.Opacity := 1.0;
+  Txt.Stretch := false;
+  Txt.WordWrap := true;
+  Txt.Width := 4;
+  Txt.Height := 2;
+  Txt.MaterialSource := MatMenu;
+  Txt.Depth := 0.01;
+  Txt.RotationAngle.X := -180;
+
+  Txt.Scale.X := 0.70;
+  Txt.Scale.Y := 0.15;
+  Txt.Visible := True;  // quando diventa visible → parte blinking
+  // ------------------------
+  // Animazione blinking
+  // ------------------------
+  Anim := TFloatAnimation.Create(Txt);
+  Anim.Name := 'BlinkAnim';
+  Anim.Parent := Txt;
+  Anim.PropertyName := 'Opacity';
+  Anim.StartValue := 1.0;
+  Anim.StopValue := 0.25;        // lampo visivo
+  Anim.Duration := 0.6;
+  Anim.AutoReverse := True;
+  Anim.Loop := True;
+  Anim.Enabled := True;
+
+  Result := Txt;
 end;
 
 end.
