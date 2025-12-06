@@ -20,7 +20,8 @@ uses
   u_GirlGrid in 'u_GirlGrid.pas',
   u_GirlStorage in 'u_GirlStorage.pas',
   u_Dialogs in 'u_Dialogs.pas',
-  u_ActivitiesDialog in 'u_ActivitiesDialog.pas';
+  u_ActivitiesDialog in 'u_ActivitiesDialog.pas',
+  u_PrivStorage in 'u_PrivStorage.pas';
 
 {$R *.res}
 

@@ -192,7 +192,7 @@ begin
         Plane.Parent := APrivPlane;
         Plane.Position.X := 0;
         Plane.Position.Y := 0;
-        Plane.Position.Z := 0.2;
+        Plane.Position.Z := 0.3;
       end;
 
       Plane.HitTest := True;

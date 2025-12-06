@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,
-  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog,
+  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources,
@@ -82,6 +82,11 @@ implementation
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
+var
+  S: TPrivStorage;
+  D: TPrivData;
+  I: integer;
+  APrive: TPlane;
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
@@ -112,6 +117,17 @@ begin
   GirlGrid.SetBasePosition(9,-2.5);
   TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
 
+  S:= TPrivStorage.Create(DirSaves + 'prive.j');
+  for I := 0 to 14 do begin
+    D:= S.LoadOne( I );
+    APrive := PrivGrid.GetPriveByTag(I);
+    TPrivStatus(APrive.TagObject).Number := I;
+    TPrivStatus(APrive.TagObject).State := D.State;
+    TPrivStatus(APrive.TagObject).StartTime := D.StartTime;
+    TPrivStatus(APrive.TagObject).EndTime := D.EndTime;
+    PrivGrid.SetTileState ( I, D.State );
+  end;
+  S.Free;
 
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
   MatMenuText.Color := TAlphaColorRec.Yellow;

@@ -4,15 +4,16 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
-  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,u_Dialogs,
+  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,u_Dialogs, u_PrivStorage,
   FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
 
 type
-  TTileState = (tsOff, tsOn, tsAlarm);
+//  TPrivState = (tsOff, tsOn, tsAlarm);
 
   TPrivStatus = class
     Number: Integer;
-    State: TTileState;
+    State: TPrivState;
+    StartTime: TDateTime;     // <--- ora in cui comincia il prive'
     EndTime: TDateTime;     // <--- ora in cui finisce il prive'
     Duration: Integer;      // <--- minuti totali scelti
     CountdownText: TText3D; // <--- per mostrare il countdown
@@ -45,7 +46,7 @@ type
     procedure InternalAddMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
-    procedure SetTileStateInternal(ATile: TPlane; AState: TTileState);
+    procedure SetTileStateInternal(ATile: TPlane; AState: TPrivState);
 
   public
     OnTileMouseDown: TTileMouseDownEvent;
@@ -56,7 +57,8 @@ type
       TileW, TileH, PadX, PadY: Single);
     destructor Destroy; override;
 
-    procedure SetTileState(Col, Row: Integer; State: TTileState);
+    procedure SetTileState(Col, Row: Integer; State: TPrivState); overload;
+    procedure SetTileState(Tag: Integer; State: TPrivState); overload;
     procedure SetBasePosition(BaseX, BaseY: Single);
     procedure ToggleTileState(ImgPlane: TPlane);
     function GetPriveByTag(Tag: Integer): TPlane;
@@ -302,6 +304,7 @@ begin
     procedure(Minuti: Integer)
     begin
       Data.Duration := Minuti;
+      Data.StartTime := Now;
       Data.EndTime := Now + (Minuti / 1440); // 1440 = min in 1 giorno
       ToggleTileState(TPlane(Sender));
       if Assigned(OnSwitchMouseDown) then
@@ -325,7 +328,7 @@ begin
       OnAddMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
 
 end;
-procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TTileState);
+procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TPrivState);
 begin
   case AState of
     tsOff: ATile.MaterialSource := MatOff;
@@ -334,11 +337,19 @@ begin
   end;
 end;
 
-procedure TPrivGrid.SetTileState(Col, Row: Integer; State: TTileState);
+procedure TPrivGrid.SetTileState(Col, Row: Integer; State: TPrivState);
 begin
   if (Col >= 0) and (Col < FCols) and (Row >= 0) and (Row < FRows) then
     SetTileStateInternal(FTiles[Col, Row], State);
 end;
+procedure TPrivGrid.SetTileState(Tag: Integer; State: TPrivState);
+var
+  APrive: TPlane;
+begin
+  APrive:= GetPriveByTag  ( tag );
+  SetTileStateInternal(APrive, State);
+end;
+
 
 procedure TPrivGrid.SetBasePosition(BaseX, BaseY: Single);
 begin
@@ -402,7 +413,10 @@ var
   NewColor: TAlphaColor;
   MainTile: TPlane;
   StatusText: string;
-  OldState: TTileState;
+  OldState: TPrivState;
+
+  S: TPrivStorage;
+  D: TPrivData;
 begin
   Data := TPrivStatus(ImgPlane.TagObject);
   ImgMat := ImgPlane.MaterialSource as TTextureMaterialSource;
@@ -414,11 +428,13 @@ begin
       Data.State := tsOn;
       NewColor := TAlphaColorRec.Limegreen;
       StatusText := 'ON';
+      Data.StartTime := Now;
     end;
     tsOn,tsAlarm: begin
       Data.State := tsOff;
       NewColor := TAlphaColorRec.Crimson;
       StatusText := 'OFF';
+      Data.StartTime := 0;
     end;
     else Exit;
   end;
@@ -435,6 +451,17 @@ begin
   MainTile := GetPriveByTag(ImgPlane.Tag);
   if Assigned(MainTile) then
     SetTileStateInternal(MainTile, Data.State);
+
+  // Salvo Il file
+  S := TPrivStorage.Create(DirSaves + 'prive.j');
+  // aggiorno stato
+  D.State := Data.State;
+  D.StartTime := Data.StartTime;
+  D.EndTime := Data.EndTime;
+  // salvo solo quel prive
+  S.SaveOne(ImgPlane.Tag, D);
+  S.Free;
+
 
   // 🔥 EVENTO STATE-CHANGED
   if Assigned(OnStateChanged) then
