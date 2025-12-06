@@ -261,7 +261,7 @@ var
 begin
     case Data.State of
       tsOn: begin
-         { per tutte le girl in quel prive' setto start }
+         { per tutte le girl in quel prive' setto start. lo start del prive è stato settato nella unit u_privGrid  }
         for I := 0 to GirlGrid.FGirls.Count -1 do
           begin
             if GirlGrid.FGirls[I].Prive = PriveTag then begin
@@ -274,6 +274,21 @@ begin
 
       end;
       tsOff: begin
+         {  se il privè è durato troppo poco chiedo }
+        if (Now - Data.StartTime) < (5 / 1440) then   // meno di 5 minuti
+        begin
+        Confirm.Show( 'Il Privè è durato meno di 5 minuti. registro comunque l''attività?' + sLineBreak ,
+          procedure
+          begin
+            //
+          end,
+          procedure
+          begin
+            CancelSelectedPrive;
+            Exit;
+          end
+        );
+        end;
          {  per tutte le girl in quel prive' LogActivity }
         for I := 0 to GirlGrid.FGirls.Count -1 do
           begin
@@ -327,6 +342,7 @@ begin
         AGirlStorage.SetStatus( AGirl.Name, -1, 0 );
         AGirlStorage.Free;
         GirlGrid.UpdateGrid;
+        //GirlGrid.LoadfromFiles;
 
       end;
 
@@ -439,7 +455,6 @@ begin
   SelectedPrive := -1;
   GirlGrid.ClearGirlsHighlight;
   GirlGrid.UpdateGrid;
-
 end;
 procedure TForm1.GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 var

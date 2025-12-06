@@ -512,6 +512,7 @@ var
   AGirlStorage: TGirlStorage;
   GirlData: TGirlData;
 begin
+    FGirls.Clear;
     for FileName in TDirectory.GetFiles(DirSaves, '*.json') do
       begin
         AGirl := TGirl.Create;

@@ -434,7 +434,7 @@ begin
       Data.State := tsOff;
       NewColor := TAlphaColorRec.Crimson;
       StatusText := 'OFF';
-      Data.StartTime := 0;
+      //Data.StartTime := 0;
     end;
     else Exit;
   end;
