@@ -59,10 +59,6 @@ type
     function GetGirl(const AGirlName: string): TGirl;
     procedure LoadfromFiles;
     procedure RebuildGrid;
-    procedure HighlightAvailableGirls;
-    procedure ClearGirlsHighlight;
-    procedure StartPulseAll;
-    procedure StopPulseAll;
     procedure UpdateGrid;
   end;
 
@@ -374,76 +370,7 @@ begin
         Exit;
       end;
 end;
-procedure TGirlGrid.HighlightAvailableGirls;
-var
-  G: TGirl;
-  Tile: TPlane;
-begin
-  for G in FGirls do
-  begin
-    Tile := GetTileByGirlName(G.Name);
-    if Tile = nil then Continue;
 
-    if G.Prive = -1 then
-      Tile.MaterialSource := MatHighLight   // libero → evidenziato
-    else
-      Tile.MaterialSource := Mat;           // occupato → normale
-    Tile.Repaint;
-  end;
-
-  // Avvia pulsazione globale
-  StartPulseAll;
-end;
-
-procedure TGirlGrid.ClearGirlsHighlight;
-var
-  G: TGirl;
-  Tile: TPlane;
-begin
-  for G in FGirls do
-  begin
-    Tile := GetTileByGirlName(G.Name);
-    if Tile = nil then continue;
-      Tile.MaterialSource := Mat; // torna normale
-    Tile.Repaint;
-  end;
-
-  // Ferma pulsazione globale
-  StopPulseAll;
-end;
-
-procedure TGirlGrid.StartPulseAll;
-var
-  Anim: TFloatAnimation;
-begin
-  if FRoot.FindComponent('PulseAll') <> nil then Exit;
-
-  Anim := TFloatAnimation.Create(FRoot);
-  Anim.Name := 'PulseAll';
-  Anim.Parent := FRoot;
-  Anim.PropertyName := 'Scale.X';
-  Anim.StartValue := 1.0;
-  Anim.StopValue := 1.03;   // leggera pulsazione
-  Anim.Duration := 1;
-  Anim.AutoReverse := True;
-  Anim.Loop := True;
-  Anim.Enabled := True;
-
-  // Scala Y uguale
-  FRoot.Scale.Y := 1.0;
-end;
-
-procedure TGirlGrid.StopPulseAll;
-var
-  C: TComponent;
-begin
-  C := FRoot.FindComponent('PulseAll');
-  if C <> nil then
-    C.Free;
-
-  FRoot.Scale.X := 1.0;
-  FRoot.Scale.Y := 1.0;
-end;
 procedure TGirlGrid.UpdateGrid;
 var
   col, row, i: Integer;

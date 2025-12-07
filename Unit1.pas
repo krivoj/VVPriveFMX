@@ -57,6 +57,7 @@ type
     const Pos: TVector3D;
     const FontSize: Single = 12
   ): TText3D;
+procedure SetTxtSelGirlVisible(AVisible: Boolean);
 
 const MAXGIRLS = 40;
 const MAXGIRLSPRIVE = 4;
@@ -146,7 +147,7 @@ begin
   MatMenu.Color := TAlphaColorRec.Black;
 
 //  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
-  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'ABC', Vector3D(8,-3.5,0), 12);
+  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
 
   PlaneAddGirl := TPlane.Create(Viewport3D1);
   PlaneAddGirl.Parent := Viewport3D1;
@@ -257,7 +258,7 @@ begin
 
   if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
     SelectedPrive := TileTag;
-    GirlGrid.HighlightAvailableGirls;
+    SetTxtSelGirlVisible ( True );
   end
   else if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
   begin
@@ -464,8 +465,9 @@ procedure TForm1.CancelSelectedPrive;
 begin
 
   SelectedPrive := -1;
-  GirlGrid.ClearGirlsHighlight;
+  SetTxtSelGirlVisible ( False );
   GirlGrid.UpdateGrid;
+
 end;
 procedure TForm1.GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
 var
@@ -514,17 +516,17 @@ begin
   Txt.HorzTextAlign := TTextAlign.Center;
   Txt.VertTextAlign := TTextAlign.Center;
   Txt.Opacity := 1.0;
-  Txt.Stretch := false;
-  Txt.WordWrap := true;
-  Txt.Width := 4;
-  Txt.Height := 2;
+  Txt.Stretch := true;
+  Txt.WordWrap := false;
+  //Txt.Width := 40;
+  //Txt.Height := 20;
   Txt.MaterialSource := MatMenu;
   Txt.Depth := 0.01;
   Txt.RotationAngle.X := -180;
 
-  Txt.Scale.X := 0.70;
-  Txt.Scale.Y := 0.15;
-  Txt.Visible := True;  // quando diventa visible → parte blinking
+  Txt.Scale.X := 1;
+  Txt.Scale.Y := 0.35;
+  Txt.Visible := False;  // quando diventa visible → parte blinking
   // ------------------------
   // Animazione blinking
   // ------------------------
@@ -540,6 +542,40 @@ begin
   Anim.Enabled := True;
 
   Result := Txt;
+end;
+procedure SetTxtSelGirlVisible(AVisible: Boolean);
+var
+  Anim: TFloatAnimation;
+begin
+  if TxtSelGirl = nil then Exit;
+
+  // imposta la visibilità
+  TxtSelGirl.Visible := AVisible;
+
+  // trova l'animazione creata in CreateBlinkingText3D (nome 'BlinkAnim')
+  if TxtSelGirl.FindComponent('BlinkAnim') is TFloatAnimation then
+  begin
+    Anim := TFloatAnimation(TxtSelGirl.FindComponent('BlinkAnim'));
+    if AVisible then
+    begin
+      Anim.Enabled := True;
+      // se la tua versione di FMX supporta Start, chiamalo per sicurezza
+      try
+        Anim.Start;
+      except
+        // Start può non esistere in tutte le versioni: l'Enabled := True è comunque la cosa importante
+      end;
+    end
+    else
+    begin
+      // disattiva/ferma animazione quando non visibile
+      try
+        Anim.Stop;
+      except
+      end;
+      Anim.Enabled := False;
+    end;
+  end;
 end;
 
 end.
