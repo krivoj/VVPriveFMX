@@ -103,7 +103,7 @@ begin
   FormReady := False;
   Confirm := TConfirmDialog.Create(Self, Self);
   InputGirl := TInputDialog.Create(Self, Self);
-  AActivitiesDialog := TActivitiesDialog.Create(Self);
+  AActivitiesDialog := TActivitiesDialog.Create(Self,Self);
   MessageDialog:= TMessageDialog.Create(self,self);
 
   Viewport3D1.Align := TAlignLayout.Client;

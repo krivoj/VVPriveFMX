@@ -18,8 +18,9 @@ type
     Duration : TDateTime;
   end;
 
-  TActivitiesDialog = class(TLayout)
+  TActivitiesDialog = class
   private
+    FOwner: TComponent;
     FRoot : TLayout;
     FPanel: TRectangle;
     FList: TListBox;
@@ -35,7 +36,7 @@ type
     procedure BtnCloseClick(Sender: TObject);
     procedure BtnPrintClick(Sender: TObject);
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(AOwner: TComponent; AParent: TFmxObject);
     destructor Destroy; override;
 
     procedure ShowCentered(GirlName: String);
@@ -48,25 +49,23 @@ uses
 
 { TActivitiesDialog }
 
-constructor TActivitiesDialog.Create(AOwner: TComponent);
+constructor TActivitiesDialog.Create(AOwner: TComponent; AParent: TFmxObject);
 var
   DarkBG: TRectangle;
   BtnBar : TLayout;
 begin
-  inherited;
+  FOwner := AOwner;
 
-  HitTest := True;
-  Align   := TAlignLayout.Contents;
-  Visible := False;
 
   FItems := TList<TActivityView>.Create;
   FStorage := TGirlStorage.Create;
 
+
   // ---------------------------------------------------------
   // ROOT OVERLAY (come TConfirmDialog)
   // ---------------------------------------------------------
-  FRoot := TLayout.Create(Self);
-  FRoot.Parent := Self;
+  FRoot := TLayout.Create(AOwner);
+  FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.HitTest := True;
 
@@ -146,13 +145,12 @@ begin
   PopulateList;
 
   // Mostra overlay
-  Visible := True;
-  BringToFront;
+  FRoot.Visible := True;
 end;
 
 procedure TActivitiesDialog.BtnCloseClick(Sender: TObject);
 begin
-  Visible := False;
+  FRoot.Visible := False;
 end;
 
 procedure TActivitiesDialog.BtnPrintClick(Sender: TObject);
