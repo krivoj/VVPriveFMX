@@ -46,6 +46,9 @@ type
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
+    procedure PrintAllMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+
     procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
     function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
 
@@ -70,8 +73,8 @@ var
   TxtSelGirl: TText3d;
 
   MatMenu : TColorMaterialSource;
-  PlaneAddGirl: TPlane;
-  TxtAddGirl : TText3D;
+  PlaneAddGirl,PlanePrintAll: TPlane;
+  TxtAddGirl,TxtPrintAll : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
 
   MBorder: TPlane;
@@ -179,6 +182,39 @@ begin
   TxtAddGirl.Position.Z := 0.05;
   TxtAddGirl.RotationAngle.X := -180;
   TxtAddGirl.HitTest := false;
+
+
+  PlanePrintAll := TPlane.Create(Viewport3D1);
+  PlanePrintAll.Parent := Viewport3D1;
+  PlanePrintAll.Width := 2.2;
+  PlanePrintAll.Height := 0.5;
+  PlanePrintAll.MaterialSource := MatMenu;
+  PlanePrintAll.Position.X := 8;
+  PlanePrintAll.Position.Y := -5;
+  PlanePrintAll.HitTest := True;
+  PlanePrintAll.OnMouseDown := PrintAllMouseDown;
+  PlanePrintAll.Cursor := CrHandPoint;
+
+  // Testo identificativo della cella
+  TxtPrintAll := TText3D.Create(PlaneAddGirl);
+  TxtPrintAll.Parent := PlanePrintAll;
+  TxtPrintAll.Font.Size := 10;
+  TxtPrintAll.WordWrap := False;
+  TxtPrintAll.MaterialSource := MatMenuText;
+  TxtPrintAll.Text := 'STAMPA ATTIVITA''';
+  TxtPrintAll.HorzTextAlign := TTextAlign.Center;
+  TxtPrintAll.VertTextAlign := TTextAlign.Center;
+// Posizione al centro del plane
+  TxtPrintAll.Position.X := 0;
+  TxtPrintAll.Position.Y := 0;
+  TxtPrintAll.Depth := 0.00;
+  TxtPrintAll.Scale.X := 0.70;
+  TxtPrintAll.Scale.Y := 0.15;
+  //TxtAddGirl.Stretch := false;
+  TxtPrintAll.Position.Z := 0.05;
+  TxtPrintAll.RotationAngle.X := -180;
+  TxtPrintAll.HitTest := false;
+
 
   BorderMat := TColorMaterialSource.Create(Viewport3D1);
   BorderMat.Color := TAlphaColorRec.gray;   // colore bordo
@@ -576,6 +612,13 @@ begin
       Anim.Enabled := False;
     end;
   end;
+end;
+procedure TForm1.PrintAllMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+begin
+  CancelSelectedPrive;
+  AActivitiesDialog.PrintAllActivities;
+
 end;
 
 end.

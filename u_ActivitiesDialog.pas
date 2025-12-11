@@ -5,9 +5,28 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types,
   System.Generics.Collections,
-  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes,
+  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes, FMX.Memo,
   FMX.Objects, FMX.Graphics,
+  FMX.Printer, FMX.Dialogs,                // << aggiunte per la stampa
   u_GirlStorage, System.IOUtils, System.DateUtils;
+
+type
+  TPrintPreviewDialog = class
+  private
+    FOwner: TComponent;
+    FRoot: TLayout;
+    FPanel: TRectangle;
+    FMemo: TMemo;
+    FBtnPrint: TButton;
+    FBtnClose: TButton;
+    FContent: string;
+    procedure BtnCloseClick(Sender: TObject);
+    procedure BtnPrintClick(Sender: TObject);
+    procedure StampaTesto(const AText: string);  // << aggiunto
+  public
+    constructor Create(AOwner: TComponent; AParent: TFmxObject);
+    procedure ShowPreview(const AText: string);
+  end;
 
 type
   TActivityView = record
@@ -26,7 +45,7 @@ type
     FList: TListBox;
     FBtnClose: TButton;
     FBtnPrint: TButton;
-
+    FCurrentGirl: string;
     FItems: TList<TActivityView>;
     FStorage: TGirlStorage;
 
@@ -35,11 +54,14 @@ type
 
     procedure BtnCloseClick(Sender: TObject);
     procedure BtnPrintClick(Sender: TObject);
+
+    procedure StampaTesto(const AText: string);   // << aggiunto
   public
     constructor Create(AOwner: TComponent; AParent: TFmxObject);
     destructor Destroy; override;
 
     procedure ShowCentered(GirlName: String);
+    procedure PrintAllActivities;
   end;
 
 implementation
@@ -47,7 +69,36 @@ implementation
 uses
   Unit1;
 
-{ TActivitiesDialog }
+{ ===================================================================== }
+{  FUNZIONE DI STAMPA REALE (TPrinter)                                  }
+{ ===================================================================== }
+
+procedure StampaReal(const Text: string);
+var
+  P: TPrinter;
+begin
+
+    P := Printer;
+    P.BeginDoc;
+    try
+      P.Canvas.Fill.Color := TAlphaColors.Black;
+      P.Canvas.FillText(
+        RectF(50, 50, P.PageWidth - 50, P.PageHeight - 50),
+        Text,
+        False,
+        1.0,
+        [],
+        TTextAlign.Leading,
+        TTextAlign.Leading
+      );
+    finally
+      P.EndDoc;
+    end;
+end;
+
+{ ===================================================================== }
+{ TActivitiesDialog                                                     }
+{ ===================================================================== }
 
 constructor TActivitiesDialog.Create(AOwner: TComponent; AParent: TFmxObject);
 var
@@ -56,29 +107,20 @@ var
 begin
   FOwner := AOwner;
 
-
   FItems := TList<TActivityView>.Create;
   FStorage := TGirlStorage.Create;
 
-
-  // ---------------------------------------------------------
-  // ROOT OVERLAY (come TConfirmDialog)
-  // ---------------------------------------------------------
   FRoot := TLayout.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.HitTest := True;
 
-  // sfondo scuro trasparente
   DarkBG := TRectangle.Create(FRoot);
   DarkBG.Parent := FRoot;
   DarkBG.Align := TAlignLayout.Contents;
   DarkBG.Fill.Color := $88000000;
   DarkBG.Stroke.Kind := TBrushKind.None;
 
-  // ---------------------------------------------------------
-  // PANNELLO CENTRALE
-  // ---------------------------------------------------------
   FPanel := TRectangle.Create(FRoot);
   FPanel.Parent := FRoot;
   FPanel.Align := TAlignLayout.Center;
@@ -90,23 +132,16 @@ begin
   FPanel.Stroke.Kind := TBrushKind.None;
   FPanel.Padding.Rect := TRectF.Create(20,20,20,20);
 
-  // ---------------------------------------------------------
-  // LISTA DELLE ATTIVITÀ
-  // ---------------------------------------------------------
   FList := TListBox.Create(FPanel);
   FList.Parent := FPanel;
   FList.Align := TAlignLayout.Client;
-  FList.ItemHeight := 50;
+  FList.ItemHeight := 25;
 
-  // ---------------------------------------------------------
-  // BARRA BOTTONI IN BASSO
-  // ---------------------------------------------------------
   BtnBar := TLayout.Create(FPanel);
   BtnBar.Parent := FPanel;
   BtnBar.Align := TAlignLayout.Bottom;
   BtnBar.Height := 100;
 
-  // Pulsante stampa
   FBtnPrint := TButton.Create(BtnBar);
   FBtnPrint.Parent := BtnBar;
   FBtnPrint.Align := TAlignLayout.Left;
@@ -115,7 +150,6 @@ begin
   FBtnPrint.OnClick := BtnPrintClick;
   FBtnPrint.Cursor := CrHandPoint;
 
-  // Pulsante chiudi
   FBtnClose := TButton.Create(BtnBar);
   FBtnClose.Parent := BtnBar;
   FBtnClose.Align := TAlignLayout.Right;
@@ -123,6 +157,8 @@ begin
   FBtnClose.Text := 'Chiudi';
   FBtnClose.OnClick := BtnCloseClick;
   FBtnClose.Cursor := CrHandPoint;
+
+  FRoot.Visible := False;
 end;
 
 destructor TActivitiesDialog.Destroy;
@@ -134,17 +170,14 @@ end;
 
 procedure TActivitiesDialog.ShowCentered(GirlName: String);
 begin
-  // Reset lista attività
+  FCurrentGirl := GirlName;
+
   FItems.Clear;
   FList.Clear;
 
-  // Carica attività della ragazza
   LoadGirl(GirlName);
-
-  // Popola lista
   PopulateList;
 
-  // Mostra overlay
   FRoot.Visible := True;
 end;
 
@@ -155,17 +188,16 @@ end;
 
 procedure TActivitiesDialog.BtnPrintClick(Sender: TObject);
 var
-  SL: TStringList;
   A: TActivityView;
-  OutFile: string;
+  Output: TStringList;
 begin
-  SL := TStringList.Create;
+  Output := TStringList.Create;
   try
-    SL.Add('Registro attività privè');
-    SL.Add('----------------------------------------');
+    Output.Add('Registro attività privè - ' + FCurrentGirl);
+    Output.Add('----------------------------------------');
 
     for A in FItems do
-      SL.Add(Format('%s | Prive %d | %s -> %s | %s',
+      Output.Add(Format('%s | Prive %d      | %s -> %s      | %s',
         [
           A.GirlName,
           A.Prive,
@@ -174,12 +206,15 @@ begin
           FormatDateTime('hh:nn:ss', A.Duration)
         ]));
 
-    OutFile := TPath.Combine(TPath.GetDocumentsPath, 'AttivitaPrive.txt');
-    SL.SaveToFile(OutFile);
-
+    StampaReal(Output.Text);   // << STAMPA VERA
   finally
-    SL.Free;
+    Output.Free;
   end;
+end;
+
+procedure TActivitiesDialog.StampaTesto(const AText: string);
+begin
+  StampaReal(AText);
 end;
 
 procedure TActivitiesDialog.LoadGirl(const GirlName: string);
@@ -215,18 +250,148 @@ begin
     LI.Parent := FList;
 
     LI.Text :=
-      Format('%s | p%d | %s → %s | %s',
+      Format('p%d      | %s → %s     | %s',
       [
-        I.GirlName,
         I.Prive,
         FormatDateTime('dd/mm HH:nn', I.StartDT),
         FormatDateTime('HH:nn',        I.EndDT),
         FormatDateTime('hh:nn:ss',     I.Duration)
       ]);
 
-    LI.Height := 50;
+    LI.Height := 25;
     LI.TextSettings.FontColor := TAlphaColors.White;
   end;
+end;
+
+procedure TActivitiesDialog.PrintAllActivities;
+var
+  Files: TStringDynArray;
+  FileName, GirlName: string;
+  Data: TGirlData;
+  A: TActivity;
+  Output: TStringList;
+begin
+  Output := TStringList.Create;
+  try
+    Output.Add('Registro completo attività privè');
+    Output.Add('----------------------------------------');
+    Output.Add('');
+
+    Files := TDirectory.GetFiles(DirSaves, '*.json');
+
+    for FileName in Files do
+    begin
+      GirlName := TPath.GetFileNameWithoutExtension(FileName);
+      Data := FStorage.LoadGirl(GirlName);
+
+      Output.Add('--- ' + GirlName + ' ---');
+      Output.Add('');
+
+      for A in Data.Activities do
+      begin
+        Output.Add(
+          Format('%s | Prive %d      | %s -> %s       | %s',
+          [
+            GirlName,
+            A.Prive,
+            DateTimeToStr(A.Start),
+            DateTimeToStr(A.End_),
+            FormatDateTime('hh:nn:ss', A.End_ - A.Start)
+          ]));
+      end;
+
+      Output.Add('');
+    end;
+
+    StampaReal(Output.Text);   // << STAMPA VERA
+  finally
+    Output.Free;
+  end;
+end;
+
+{ ===================================================================== }
+{ TPrintPreviewDialog                                                   }
+{ ===================================================================== }
+
+constructor TPrintPreviewDialog.Create(AOwner: TComponent; AParent: TFmxObject);
+var
+  DarkBG: TRectangle;
+  BtnBar: TLayout;
+begin
+  FOwner := AOwner;
+
+  FRoot := TLayout.Create(AOwner);
+  FRoot.Parent := AParent;
+  FRoot.Align := TAlignLayout.Contents;
+  FRoot.Visible := False;
+
+  DarkBG := TRectangle.Create(FRoot);
+  DarkBG.Parent := FRoot;
+  DarkBG.Align := TAlignLayout.Contents;
+  DarkBG.Fill.Color := $88000000;
+  DarkBG.Stroke.Kind := TBrushKind.None;
+
+  FPanel := TRectangle.Create(FRoot);
+  FPanel.Parent := FRoot;
+  FPanel.Align := TAlignLayout.Center;
+  FPanel.Width := 700;
+  FPanel.Height := 700;
+  FPanel.XRadius := 16;
+  FPanel.YRadius := 16;
+  FPanel.Fill.Color := $FF202020;
+  FPanel.Stroke.Kind := TBrushKind.None;
+  FPanel.Padding.Rect := TRectF.Create(20,20,20,20);
+
+  FMemo := TMemo.Create(FPanel);
+  FMemo.Parent := FPanel;
+  FMemo.Align := TAlignLayout.Client;
+  FMemo.ReadOnly := True;
+  FMemo.TextSettings.FontColor := TAlphaColors.White;
+  FMemo.Lines.Clear;
+
+  BtnBar := TLayout.Create(FPanel);
+  BtnBar.Parent := FPanel;
+  BtnBar.Align := TAlignLayout.Bottom;
+  BtnBar.Height := 80;
+
+  FBtnPrint := TButton.Create(BtnBar);
+  FBtnPrint.Parent := BtnBar;
+  FBtnPrint.Align := TAlignLayout.Left;
+  FBtnPrint.Width := 300;
+  FBtnPrint.Text := 'Stampa';
+  FBtnPrint.Cursor := CrHandPoint;
+  FBtnPrint.OnClick := BtnPrintClick;
+
+  FBtnClose := TButton.Create(BtnBar);
+  FBtnClose.Parent := BtnBar;
+  FBtnClose.Align := TAlignLayout.Right;
+  FBtnClose.Width := 300;
+  FBtnClose.Text := 'Chiudi';
+  FBtnClose.Cursor := CrHandPoint;
+  FBtnClose.OnClick := BtnCloseClick;
+end;
+
+procedure TPrintPreviewDialog.ShowPreview(const AText: string);
+begin
+  FContent := AText;
+  FMemo.Lines.Text := AText;
+  FRoot.Visible := True;
+end;
+
+procedure TPrintPreviewDialog.BtnCloseClick(Sender: TObject);
+begin
+  FRoot.Visible := False;
+end;
+
+procedure TPrintPreviewDialog.StampaTesto(const AText: string);
+begin
+  StampaReal(AText);
+end;
+
+procedure TPrintPreviewDialog.BtnPrintClick(Sender: TObject);
+begin
+  StampaReal(FContent);   // << STAMPA VERA
+  FRoot.Visible := False;
 end;
 
 end.
