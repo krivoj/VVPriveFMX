@@ -43,11 +43,17 @@ type
     Shift: TShiftState; Tag: string);
 
     // Menu click
+
+    procedure ClearAllActivitiesMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+
     procedure AddGirlMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure PrintAllMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+
+
 
     procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
     function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
@@ -73,8 +79,8 @@ var
   TxtSelGirl: TText3d;
 
   MatMenu : TColorMaterialSource;
-  PlaneAddGirl,PlanePrintAll: TPlane;
-  TxtAddGirl,TxtPrintAll : TText3D;
+  PlaneClearAllActivities,PlaneAddGirl,PlanePrintAll: TPlane;
+  TxtClearAllActivities,TxtAddGirl,TxtPrintAll : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
 
   MBorder: TPlane;
@@ -152,6 +158,37 @@ begin
 //  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
   TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
 
+  PlaneClearAllActivities := TPlane.Create(Viewport3D1);
+  PlaneClearAllActivities.Parent := Viewport3D1;
+  PlaneClearAllActivities.Width := 2.2;
+  PlaneClearAllActivities.Height := 0.5;
+  PlaneClearAllActivities.MaterialSource := MatMenu;
+  PlaneClearAllActivities.Position.X := 6.5;
+  PlaneClearAllActivities.Position.Y := -5;
+  PlaneClearAllActivities.HitTest := True;
+  PlaneClearAllActivities.OnMouseDown := ClearAllActivitiesMouseDown;
+  PlaneClearAllActivities.Cursor := CrHandPoint;
+
+  // Testo identificativo della cella
+  TxtClearAllActivities := TText3D.Create(PlaneClearAllActivities);
+  TxtClearAllActivities.Parent := PlaneClearAllActivities;
+  TxtClearAllActivities.Font.Size := 10;
+  TxtClearAllActivities.WordWrap := False;
+  TxtClearAllActivities.MaterialSource := MatMenuText;
+  TxtClearAllActivities.Text := 'AzzERA ATTIVITA''';
+  TxtClearAllActivities.HorzTextAlign := TTextAlign.Center;
+  TxtClearAllActivities.VertTextAlign := TTextAlign.Center;
+// Posizione al centro del plane
+  TxtClearAllActivities.Position.X := 0;
+  TxtClearAllActivities.Position.Y := 0;
+  TxtClearAllActivities.Depth := 0.00;
+  TxtClearAllActivities.Scale.X := 0.70;
+  TxtClearAllActivities.Scale.Y := 0.15;
+  //TxtClearAllActivities.Stretch := false;
+  TxtClearAllActivities.Position.Z := 0.05;
+  TxtClearAllActivities.RotationAngle.X := -180;
+  TxtClearAllActivities.HitTest := false;
+
   PlaneAddGirl := TPlane.Create(Viewport3D1);
   PlaneAddGirl.Parent := Viewport3D1;
   PlaneAddGirl.Width := 2.2;
@@ -189,8 +226,8 @@ begin
   PlanePrintAll.Width := 2.2;
   PlanePrintAll.Height := 0.5;
   PlanePrintAll.MaterialSource := MatMenu;
-  PlanePrintAll.Position.X := 8;
-  PlanePrintAll.Position.Y := -5;
+  PlanePrintAll.Position.X := 6.5;
+  PlanePrintAll.Position.Y := -5.5;
   PlanePrintAll.HitTest := True;
   PlanePrintAll.OnMouseDown := PrintAllMouseDown;
   PlanePrintAll.Cursor := CrHandPoint;
@@ -496,6 +533,25 @@ begin
   end
   else
     ShowMessage('Puoi gestire al massimo ' +  MAXGIRLS.ToString + ' ragazze');
+end;
+procedure TForm1.ClearAllActivitiesMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+var
+  GirlStorage: TGirlStorage;
+  Files: TStringDynArray;
+  FileName, GirlName: string;
+begin
+  Files := TDirectory.GetFiles(DirSaves, '*.json');
+
+  for FileName in Files do
+  begin
+    GirlStorage := TGirlStorage.Create;
+    GirlName := UpperCase( system.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
+    GirlStorage.ClearActivities (GirlName);
+    GirlStorage.Free;
+
+    MessageDialog.Show('ATTIVITA'' AZZERATE.' + SLineBreak + 'INIZIO SERATA.' );
+  end;
 end;
 procedure TForm1.CancelSelectedPrive;
 begin

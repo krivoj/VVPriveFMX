@@ -51,6 +51,8 @@ type
 
     procedure LoadGirl(const GirlName: string);
     procedure PopulateList;
+    procedure PaintClose(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+    procedure PaintPrint(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
 
     procedure BtnCloseClick(Sender: TObject);
     procedure BtnPrintClick(Sender: TObject);
@@ -76,24 +78,56 @@ uses
 procedure StampaReal(const Text: string);
 var
   P: TPrinter;
+  Lines: TArray<string>;
+  LineHeight: Single;
+  MaxLinesPerPage: Integer;
+  X, Y: Single;
+  I, Total: Integer;
 begin
+  P := Printer;
 
-    P := Printer;
-    P.BeginDoc;
-    try
-      P.Canvas.Fill.Color := TAlphaColors.Black;
-      P.Canvas.FillText(
-        RectF(50, 50, P.PageWidth - 50, P.PageHeight - 50),
-        Text,
-        False,
-        1.0,
-        [],
-        TTextAlign.Leading,
-        TTextAlign.Leading
-      );
-    finally
-      P.EndDoc;
+  Lines := Text.Split([sLineBreak]);
+  LineHeight := 50; // pixel verticali per riga
+  MaxLinesPerPage := Trunc((P.PageHeight - 100) / LineHeight);
+
+  P.BeginDoc;
+  try
+    I := 0;
+    Total := Length(Lines);
+
+    while I < Total do
+    begin
+      X := 50;
+      Y := 50;
+
+      while (I < Total) and (MaxLinesPerPage > 0) do
+      begin
+        P.Canvas.Fill.Color := TAlphaColors.Black;
+        P.Canvas.FillText(
+          RectF(X, Y, P.PageWidth - 50, Y + LineHeight),
+          Lines[I],
+          False,
+          1.0,
+          [],
+          TTextAlign.Leading,
+          TTextAlign.Leading
+        );
+
+        Inc(I);
+        Dec(MaxLinesPerPage);
+        Y := Y + LineHeight;
+      end;
+
+      if I < Total then
+      begin
+        P.NewPage;  // <<< pagina successiva
+        MaxLinesPerPage := Trunc((P.PageHeight - 100) / LineHeight);
+      end;
     end;
+
+  finally
+    P.EndDoc;
+  end;
 end;
 
 { ===================================================================== }
@@ -124,8 +158,8 @@ begin
   FPanel := TRectangle.Create(FRoot);
   FPanel.Parent := FRoot;
   FPanel.Align := TAlignLayout.Center;
-  FPanel.Width := 600;
-  FPanel.Height := 600;
+  FPanel.Width := 800;
+  FPanel.Height := 800;
   FPanel.Fill.Color := $FF202020;
   FPanel.XRadius := 18;
   FPanel.YRadius := 18;
@@ -149,6 +183,7 @@ begin
   FBtnPrint.Text := 'Stampa';
   FBtnPrint.OnClick := BtnPrintClick;
   FBtnPrint.Cursor := CrHandPoint;
+  FBtnPrint.OnPaint := PaintPrint;
 
   FBtnClose := TButton.Create(BtnBar);
   FBtnClose.Parent := BtnBar;
@@ -157,6 +192,7 @@ begin
   FBtnClose.Text := 'Chiudi';
   FBtnClose.OnClick := BtnCloseClick;
   FBtnClose.Cursor := CrHandPoint;
+  FBtnClose.OnPaint := PaintClose;
 
   FRoot.Visible := False;
 end;
@@ -185,6 +221,10 @@ procedure TActivitiesDialog.BtnCloseClick(Sender: TObject);
 begin
   FRoot.Visible := False;
 end;
+function Fix(const S: string; Len: Integer): string;
+begin
+  Result := Copy(S + StringOfChar(' ', Len), 1, Len);
+end;
 
 procedure TActivitiesDialog.BtnPrintClick(Sender: TObject);
 var
@@ -193,20 +233,34 @@ var
 begin
   Output := TStringList.Create;
   try
-    Output.Add('Registro attività privè - ' + FCurrentGirl);
-    Output.Add('----------------------------------------');
+    Output.Add(Format('REGISTRO ATTIVITÀ PRIVÈ – %s', [FCurrentGirl]));
+    Output.Add(StringOfChar('-', 70));
+    Output.Add('');
+    Output.Add(
+      //Fix('Ragazza',12)+' '+
+      Fix('Prive',14)+' '+
+      Fix('Inizio',25)+' '+
+      Fix('Fine',25)+' '+
+      Fix('Durata',8)
+    );
+    Output.Add(
+      //StringOfChar('-',12)+' '+
+      StringOfChar('-',14)+' '+
+      StringOfChar('-',25)+' '+
+      StringOfChar('-',25)+' '+
+      StringOfChar('-',8)
+    );
 
     for A in FItems do
-      Output.Add(Format('%s | Prive %d      | %s -> %s      | %s',
-        [
-          A.GirlName,
-          A.Prive,
-          DateTimeToStr(A.StartDT),
-          DateTimeToStr(A.EndDT),
-          FormatDateTime('hh:nn:ss', A.Duration)
-        ]));
+      Output.Add(
+       // Fix(A.GirlName,12)+' '+
+        Fix(A.Prive.ToString,5)+' '+
+        Fix(FormatDateTime('yyyy-mm-dd hh:nn', A.StartDT),19)+' '+
+        Fix(FormatDateTime('yyyy-mm-dd hh:nn', A.EndDT),19)+' '+
+        Fix(FormatDateTime('hh:nn:ss', A.Duration),8)
+      );
 
-    StampaReal(Output.Text);   // << STAMPA VERA
+    StampaReal(Output.Text);
   finally
     Output.Free;
   end;
@@ -241,6 +295,7 @@ procedure TActivitiesDialog.PopulateList;
 var
   I: TActivityView;
   LI: TListBoxItem;
+  S_Priv, S_Start, S_End, S_Dur: string;
 begin
   FList.Clear;
 
@@ -249,17 +304,26 @@ begin
     LI := TListBoxItem.Create(FList);
     LI.Parent := FList;
 
-    LI.Text :=
-      Format('p%d      | %s → %s     | %s',
-      [
-        I.Prive,
-        FormatDateTime('dd/mm HH:nn', I.StartDT),
-        FormatDateTime('HH:nn',        I.EndDT),
-        FormatDateTime('hh:nn:ss',     I.Duration)
-      ]);
+    // colonne esattamente come la stampa
+    S_Priv  := Fix(I.Prive.ToString, 5);
+    S_Start := Fix(FormatDateTime('yyyy-mm-dd hh:nn', I.StartDT), 19);
+    S_End   := Fix(FormatDateTime('yyyy-mm-dd hh:nn', I.EndDT), 19);
+    S_Dur   := Fix(FormatDateTime('hh:nn:ss', I.Duration), 8);
 
-    LI.Height := 25;
-    LI.TextSettings.FontColor := TAlphaColors.White;
+    // monospazio e perfetta allineazione
+    LI.Text :=
+      S_Priv + '   ' +
+      S_Start + '   ' +
+      S_End   + '   ' +
+      S_Dur;
+
+    LI.StyledSettings := [];
+    LI.TextSettings.Font.Family := 'Consolas';   // <--- MONOSPAZIO
+    LI.TextSettings.Font.Size := 20;
+    LI.TextSettings.FontColor := TAlphaColors.Black;
+    LI.TextSettings.HorzAlign := TTextAlign.Leading;
+
+    LI.Height := 28;
   end;
 end;
 
@@ -273,8 +337,8 @@ var
 begin
   Output := TStringList.Create;
   try
-    Output.Add('Registro completo attività privè');
-    Output.Add('----------------------------------------');
+    Output.Add('REGISTRO COMPLETO ATTIVITÀ PRIVÈ');
+    Output.Add(StringOfChar('=', 70));
     Output.Add('');
 
     Files := TDirectory.GetFiles(DirSaves, '*.json');
@@ -284,26 +348,37 @@ begin
       GirlName := TPath.GetFileNameWithoutExtension(FileName);
       Data := FStorage.LoadGirl(GirlName);
 
-      Output.Add('--- ' + GirlName + ' ---');
-      Output.Add('');
+      Output.Add('--- '+GirlName+' ---');
+      Output.Add(
+        Fix('Ragazza',10)+' '+
+        Fix('Prive',10)+' '+
+        Fix('Inizio',30)+' '+
+        Fix('Fine',20)+' '+
+        Fix('Durata',20)
+      );
+      Output.Add(
+        StringOfChar('-',10)+' '+
+        StringOfChar('-',10)+' '+
+        StringOfChar('-',30)+' '+
+        StringOfChar('-',20)+' '+
+        StringOfChar('-',20)
+      );
 
       for A in Data.Activities do
       begin
         Output.Add(
-          Format('%s | Prive %d      | %s -> %s       | %s',
-          [
-            GirlName,
-            A.Prive,
-            DateTimeToStr(A.Start),
-            DateTimeToStr(A.End_),
-            FormatDateTime('hh:nn:ss', A.End_ - A.Start)
-          ]));
+          Fix(GirlName,12)+' '+
+          Fix(A.Prive.ToString,5)+' '+
+          Fix(FormatDateTime('yyyy-mm-dd hh:nn', A.Start),19)+' '+
+          Fix(FormatDateTime('yyyy-mm-dd hh:nn', A.End_),19)+' '+
+          Fix(FormatDateTime('hh:nn:ss', A.End_ - A.Start),8)
+        );
       end;
 
       Output.Add('');
     end;
 
-    StampaReal(Output.Text);   // << STAMPA VERA
+    StampaReal(Output.Text);
   finally
     Output.Free;
   end;
@@ -392,6 +467,39 @@ procedure TPrintPreviewDialog.BtnPrintClick(Sender: TObject);
 begin
   StampaReal(FContent);   // << STAMPA VERA
   FRoot.Visible := False;
+end;
+procedure TActivitiesDialog.PaintClose(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+var
+  Btn: TButton;
+  TextRect: TRectF;
+begin
+  Btn := Sender as TButton;
+  Canvas.Fill.Color := $FFFFCCCC;
+  Canvas.Fill.Kind := TBrushKind.Solid;
+  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
+  Canvas.Fill.Color := $FF000000;
+  Canvas.Font.Size := 24;
+  Canvas.Font.Family := Btn.TextSettings.Font.Family;
+  Canvas.Font.Style := [TFontStyle.fsBold];
+  TextRect := ARect;
+  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
+end;
+
+procedure TActivitiesDialog.PaintPrint(Sender: TObject; Canvas: TCanvas; const ARect: TRectF);
+var
+  Btn: TButton;
+  TextRect: TRectF;
+begin
+  Btn := Sender as TButton;
+  Canvas.Fill.Color := $FFCCFFCC;
+  Canvas.Fill.Kind := TBrushKind.Solid;
+  Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
+  Canvas.Fill.Color := $FF000000;
+  Canvas.Font.Size := 24;
+  Canvas.Font.Family := Btn.TextSettings.Font.Family;
+  Canvas.Font.Style := [TFontStyle.fsBold];
+  TextRect := ARect;
+  Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
 end;
 
 end.

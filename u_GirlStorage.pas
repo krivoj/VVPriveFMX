@@ -37,6 +37,7 @@ type
     procedure AddActivity(const GirlName: string; const A: TActivity);
     procedure SetStatus(const GirlName: string; NewPrive: Integer; StartTime: TDateTime);
     procedure LogActivity(const GirlName: string);
+    procedure ClearActivities(const GirlName: string);
   end;
 
 implementation
@@ -176,6 +177,21 @@ begin
   // Aggiungo l'attività al JSON
   AddActivity(GirlName, A);
 
+end;
+procedure TGirlStorage.ClearActivities(const GirlName: string);
+var
+  Data: TGirlData;
+begin
+  Data := LoadGirl(GirlName);
+
+  // cancella tutte le attività
+  SetLength(Data.Activities, 0);
+
+  // opzionale: resetta anche lo stato attuale
+   Data.Prive := -1;
+   Data.Start := 0;
+
+  SaveGirl(GirlName, Data);
 end;
 end.
 
