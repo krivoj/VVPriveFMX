@@ -17,6 +17,7 @@ type
   public
     Name: string;
     Prive: Integer;
+    Slot: Integer;
     Start: TDateTime;
   end;
 
@@ -186,8 +187,8 @@ begin
         // LA RAGAZZA E' IN PRIVE
         APrivPlane := FPrivGrid.GetPriveByTag(FGirls[i].Prive);
         Plane.Parent := APrivPlane;
-        Plane.Position.X := 0;
-        Plane.Position.Y := 0;
+        Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+        Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
         Plane.Position.Z := 0.3;
       end;
 
@@ -402,8 +403,8 @@ begin
         if Assigned(APrivPlane) then
         begin
           Plane.Parent := APrivPlane;
-          Plane.Position.X := 0;
-          Plane.Position.Y := 0;
+          Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+          Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
         end;
       end;
 
@@ -450,6 +451,7 @@ begin
         AGirlStorage:= TGirlStorage.Create;
         GirlData := AGirlStorage.LoadGirl( AGirl.Name );
         AGirl.Prive := GirlData.Prive;
+        AGirl.Slot :=  GirlData.Slot;
         AGirl.Start := GirlData.Start;
         FGirls.Add(AGirl);
       end;

@@ -54,9 +54,9 @@ type
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
 
-
     procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
     function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
+    function GetPriveFreeSlot ( PriveTag: Integer ): Integer;
 
 
   end;
@@ -91,6 +91,8 @@ var
   AActivitiesDialog: TActivitiesDialog;
   MessageDialog: TMessageDialog;
 
+  PriveSlot : Array[0..MAXGIRLSPRIVE-1] of TPoint3d;
+
 implementation
 
 {$R *.fmx}
@@ -117,6 +119,15 @@ begin
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
+
+  PriveSlot[0].X := 0;
+  PriveSlot[0].Y := 0;
+  PriveSlot[1].X := 0;
+  PriveSlot[1].Y := -0.5;
+  PriveSlot[2].X := 0;
+  PriveSlot[2].Y := -1;
+  PriveSlot[3].X := 0;
+  PriveSlot[3].Y := -1.5;
 
 
   // Crea grid privè 6x4
@@ -175,7 +186,7 @@ begin
   TxtClearAllActivities.Font.Size := 10;
   TxtClearAllActivities.WordWrap := False;
   TxtClearAllActivities.MaterialSource := MatMenuText;
-  TxtClearAllActivities.Text := 'AzzERA ATTIVITA''';
+  TxtClearAllActivities.Text := 'AZZERA ATTIVITA''';
   TxtClearAllActivities.HorzTextAlign := TTextAlign.Center;
   TxtClearAllActivities.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -227,7 +238,7 @@ begin
   PlanePrintAll.Height := 0.5;
   PlanePrintAll.MaterialSource := MatMenu;
   PlanePrintAll.Position.X := 6.5;
-  PlanePrintAll.Position.Y := -5.5;
+  PlanePrintAll.Position.Y := -5.65;
   PlanePrintAll.HitTest := True;
   PlanePrintAll.OnMouseDown := PrintAllMouseDown;
   PlanePrintAll.Cursor := CrHandPoint;
@@ -328,14 +339,21 @@ end;
 procedure TForm1.PriveAddMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; TileTag: Integer);
 begin
+  SelectedPrive := TileTag;
 
   if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
-    SelectedPrive := TileTag;
+    if GetGirlsCountByPrive ( SelectedPrive ) >= MAXGIRLSPRIVE then
+    begin
+      MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' ragazze in un privè.') ;
+      SelectedPrive := -1;
+      Exit;
+    end;
     SetTxtSelGirlVisible ( True );
   end
-  else if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
+  else if TPrivStatus((Tplane(Sender)).TagObject).State <> tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
   begin
-    MessageDialog.Show( 'Non puoi aggiungere una ragzza se il privè è attivo.' );
+    MessageDialog.Show( 'Non puoi aggiungere una ragazza se il privè è attivo.' );
+    SelectedPrive := -1;
   end;
 
 end;
@@ -352,7 +370,7 @@ begin
             if GirlGrid.FGirls[I].Prive = PriveTag then begin
               GirlGrid.FGirls[I].Start := Now;
               AGirlStorage:= TGirlStorage.Create;
-              AGirlStorage.SetStatus(GirlGrid.FGirls[I].Name , PriveTag, Now);  // SCRIVE SUBITO SUL FILE
+              AGirlStorage.SetStatus(GirlGrid.FGirls[I].Name , PriveTag, GirlGrid.FGirls[I].Slot , Now);  // SCRIVE SUBITO SUL FILE
               AGirlStorage.Free;
             end;
           end;
@@ -422,9 +440,10 @@ begin
       end;
       tsOff: begin
         AGirl.Prive := -1; // la rimette enlla GirlGrid
-        AGirl.Start := 0;
+        AGirl.Slot := -1; // la rimette enlla GirlGrid
+        AGirl.Start := 0; // la rimette enlla GirlGrid
         AGirlStorage:= TGirlStorage.Create;
-        AGirlStorage.SetStatus( AGirl.Name, -1, 0 );
+        AGirlStorage.SetStatus( AGirl.Name, -1, -1, 0 );
         AGirlStorage.Free;
         GirlGrid.UpdateGrid;
         //GirlGrid.LoadfromFiles;
@@ -458,10 +477,11 @@ begin
       end;
       tsOff: begin
         if GetGirlsCountByPrive ( SelectedPrive ) < MAXGIRLSPRIVE then begin
+          AGirl.Slot := GetPriveFreeSlot (SelectedPrive);  // la chiamo prima per escludere dalla lista QUESTA girl
           AGirl.Prive := SelectedPrive;
           AGirl.Start := 0; // lo start lo setta lo Switch
         end
-        else MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' in un privè.') ;
+        else MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' ragazze in un privè.') ;
       end;
     end;
 
@@ -507,6 +527,7 @@ begin
         if not FileExists(DirSaves + Name + '.json') then
         begin
           Data.Prive := -1;
+          Data.Slot := -1;
           Data.Start := 0;
           SetLength(Data.Activities, 0);
           GirlStorage.SaveGirl(Name, Data);
@@ -583,6 +604,33 @@ begin
     if GirlGrid.FGirls[I].Prive = PriveTag then
       Result := Result + 1;
   end;
+
+end;
+function TForm1.GetPriveFreeSlot ( PriveTag: Integer ): Integer;
+var
+  i: integer;
+  Slot: Array[0..MAXGIRLSPRIVE-1] of Boolean;
+begin
+  Result:= 0;
+  Slot[0]:= False;
+  Slot[1]:= False;
+  Slot[2]:= False;
+  Slot[3]:= False;
+  for I := 0 to GirlGrid.FGirls.Count -1 do
+  begin
+    if GirlGrid.FGirls[I].Prive = PriveTag then begin
+      Slot [GirlGrid.FGirls[I].Slot] := True;
+    end;
+  end;
+
+  for I := low(Slot) to High(Slot) do
+  begin
+    if Slot[i] = false then begin
+      Result := I;
+      Exit;
+    end;
+  end;
+
 
 end;
 

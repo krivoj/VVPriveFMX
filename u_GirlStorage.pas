@@ -12,12 +12,14 @@ uses
 type
   TActivity = record
     Prive: Integer;
+    Slot: integer;
     Start: TDateTime;
     End_: TDateTime;
   end;
 
   TGirlData = record
     Prive: Integer;         // stato attuale
+    Slot: Integer;
     Start: TDateTime;       // orario inizio stato
     Activities: TArray<TActivity>;
   end;
@@ -35,7 +37,7 @@ type
     function LoadGirl(const GirlName: string): TGirlData;
     procedure SaveGirl(const GirlName: string; const Data: TGirlData);
     procedure AddActivity(const GirlName: string; const A: TActivity);
-    procedure SetStatus(const GirlName: string; NewPrive: Integer; StartTime: TDateTime);
+    procedure SetStatus(const GirlName: string; NewPrive, Slot: Integer; StartTime: TDateTime);
     procedure LogActivity(const GirlName: string);
     procedure ClearActivities(const GirlName: string);
   end;
@@ -68,6 +70,7 @@ begin
   if not FileExists(FileName) then
   begin
     Result.Prive := -1;
+    Result.Slot := -1;
     Result.Start := 0;
     SetLength(Result.Activities, 0);
     Exit;
@@ -78,6 +81,7 @@ begin
     // STATUS
     Status := JSON.GetValue<TJSONObject>('status');
     Result.Prive := Status.GetValue<Integer>('prive');
+    Result.Slot := Status.GetValue<Integer>('slot');
     Result.Start := ISO8601ToDate(Status.GetValue<string>('start'));
 
     // ACTIVITIES
@@ -89,6 +93,7 @@ begin
     begin
       O := Item as TJSONObject;
       A.Prive := O.GetValue<Integer>('prive');
+      A.Slot := O.GetValue<Integer>('slot');
       A.Start := ISO8601ToDate(O.GetValue<string>('start'));
       A.End_  := ISO8601ToDate(O.GetValue<string>('end'));
       Result.Activities[i] := A;
@@ -115,6 +120,7 @@ begin
     // STATUS
     Status := TJSONObject.Create;
     Status.AddPair('prive', TJSONNumber.Create(Data.Prive));
+    Status.AddPair('slot', TJSONNumber.Create(Data.Slot));
     Status.AddPair('start', DateToISO8601(Data.Start));
     JSON.AddPair('status', Status);
 
@@ -124,6 +130,7 @@ begin
     begin
       O := TJSONObject.Create;
       O.AddPair('prive', TJSONNumber.Create(A.Prive));
+      O.AddPair('slot', TJSONNumber.Create(A.Slot));
       O.AddPair('start', DateToISO8601(A.Start));
       O.AddPair('end',   DateToISO8601(A.End_));
       Arr.AddElement(O);
@@ -148,12 +155,13 @@ begin
   Data.Activities[Len] := A;
   SaveGirl(GirlName, Data);
 end;
-procedure TGirlStorage.SetStatus(const GirlName: string; NewPrive: Integer; StartTime: TDateTime);
+procedure TGirlStorage.SetStatus(const GirlName: string; NewPrive, Slot: Integer; StartTime: TDateTime);
 var
   Data: TGirlData;
 begin
   Data := LoadGirl(GirlName);
   Data.Prive := NewPrive;
+  Data.Slot := Slot;
   Data.Start := StartTime; // può essere Now o 0
   SaveGirl(GirlName, Data);
 end;
@@ -171,6 +179,7 @@ begin
 
   // Preparo nuova attività
   A.Prive := Data.Prive;
+  A.Slot := Data.Slot;
   A.Start := Data.Start;
   A.End_  := Now;   // momento della registrazione
 
@@ -189,6 +198,7 @@ begin
 
   // opzionale: resetta anche lo stato attuale
    Data.Prive := -1;
+   Data.Slot := -1;
    Data.Start := 0;
 
   SaveGirl(GirlName, Data);
