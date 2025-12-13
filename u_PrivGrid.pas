@@ -17,6 +17,7 @@ type
     EndTime: TDateTime;     // <--- ora in cui finisce il prive'
     Duration: Integer;      // <--- minuti totali scelti
     CountdownText: TText3D; // <--- per mostrare il countdown
+    FAlarmBlinkState: Boolean; // true = Alarm, false = Neutral
   end;
 
   TStateChangedEvent = procedure(Sender: TObject; TileTag: Integer; Data: TPrivStatus) of object;
@@ -32,7 +33,6 @@ type
     FViewport: TViewport3D;
     FRoot: TDummy;
     FTiles: array of array of TPlane;
-    FAlarmBlinkState: Boolean; // true = Alarm, false = Neutral
     MatOff, MatOn, MatAlarm: TTextureMaterialSource;
 
     MatText: TColorMaterialSource;
@@ -329,11 +329,20 @@ begin
 
 end;
 procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TPrivState);
+var
+  ImgMat : TTextureMaterialSource;
 begin
+  ImgMat := ATile.MaterialSource as TTextureMaterialSource;
   case AState of
-    tsOff: ATile.MaterialSource := MatOff;
-    tsOn: ATile.MaterialSource := MatOn;
-    tsAlarm: ATile.MaterialSource := MatAlarm;
+    tsOff: begin
+              ATile.MaterialSource := MatOff;
+           end;
+    tsOn: Begin
+              ATile.MaterialSource := MatOn;
+          end;
+    tsAlarm: begin
+              ATile.MaterialSource := MatAlarm;
+          end;
   end;
 end;
 
@@ -479,43 +488,45 @@ begin
   NowT := Now;
 
   for Y := 0 to FRows - 1 do
+  begin
     for X := 0 to FCols - 1 do
-      if Assigned(FTiles[X,Y]) then
+    begin
+      Data := TPrivStatus(FTiles[X,Y].TagObject);
+      if Data.State <> tsOff then begin
+        Remaining := Data.EndTime - NowT;
+        Sec := Round(Remaining * 86400);
+        H := Sec div 3600;
+        M := (Sec div 60) mod 60;
+        S := Sec mod 60;
+        Data.CountdownText.Text := Format('%.2d:%.2d:%.2d',[H,M,S]);
+      end
+      else Data.CountdownText.Text := '';
+
+      if Data.State = tsOn then
       begin
-        Data := TPrivStatus(FTiles[X,Y].TagObject);
 
-        if Data.State = tsOn then
+        if Remaining <= 0 then
         begin
-          Remaining := Data.EndTime - NowT;
+          // PRIVÈ SCADUTO → allarme
+          SetTileStateInternal(FTiles[X,Y], tsAlarm);
+          Data.State := tsAlarm;
+        end;
 
-          if Remaining <= 0 then
-          begin
-            // PRIVÈ SCADUTO → allarme
-            SetTileStateInternal(FTiles[X,Y], tsAlarm);
-            Data.State := tsAlarm;
-          end;
-
-          Sec := Round(Remaining * 86400);
-          H := Sec div 3600;
-          M := (Sec div 60) mod 60;
-          S := Sec mod 60;
-
-          Data.CountdownText.Text := Format('%.2d:%.2d:%.2d',[H,M,S]);
-        end
-        else
-          Data.CountdownText.Text := '';
+      end;
 
         // ---- LAMPEGGIO ALLARME ----
-        if Data.State = tsAlarm then
-        begin
-          FAlarmBlinkState := not FAlarmBlinkState;
-          if FAlarmBlinkState then
-            FTiles[X,Y].MaterialSource := MatAlarm
-          else
-            FTiles[X,Y].MaterialSource := MatOff;
-          FTiles[X,Y].Repaint;
-        end;
+      if Data.State = tsAlarm then
+      begin
+        TPrivStatus(FTiles[X,Y].TagObject).FAlarmBlinkState := not TPrivStatus(FTiles[X,Y].TagObject).FAlarmBlinkState;
+        if TPrivStatus(FTiles[X,Y].TagObject).FAlarmBlinkState then
+          FTiles[X,Y].MaterialSource := MatAlarm
+        else
+          FTiles[X,Y].MaterialSource := MatOff;
+
+        FTiles[X,Y].Repaint;
       end;
+    end;
+  end;
 end;
 end.
 

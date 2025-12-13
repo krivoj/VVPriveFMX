@@ -164,7 +164,7 @@ begin
   MatMenuText := TColorMaterialSource.Create(Viewport3D1);
   MatMenuText.Color := TAlphaColorRec.Yellow;
   MatMenuText2 := TColorMaterialSource.Create(Viewport3D1);
-  MatMenuText2.Color := TAlphaColorRec.oRANGE;
+  MatMenuText2.Color := TAlphaColorRec.Red;
 
   MatMenu := TColorMaterialSource.Create(Viewport3D1);
   MatMenu.Color := TAlphaColorRec.Black;
@@ -283,8 +283,8 @@ begin
   TxtExit.Parent := PlaneExit;
   TxtExit.Font.Size := 10;
   TxtExit.WordWrap := False;
-  TxtExit.MaterialSource := MatMenuText;
-  TxtExit.Text := 'AGGIUNGI RAGAZZA';
+  TxtExit.MaterialSource := MatMenuText2;
+  TxtExit.Text := 'ESCI';
   TxtExit.HorzTextAlign := TTextAlign.Center;
   TxtExit.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -596,9 +596,14 @@ var
   GirlStorage: TGirlStorage;
   Files: TStringDynArray;
   FileName, GirlName: string;
+  S: TPrivStorage;
+  I: Integer;
+  D: TPrivdata;
+  APrive: TPlane;
 begin
   Files := TDirectory.GetFiles(DirSaves, '*.json');
 
+  // Azzera i file Json delle Girls
   for FileName in Files do
   begin
     GirlStorage := TGirlStorage.Create;
@@ -608,6 +613,25 @@ begin
 
     MessageDialog.Show('ATTIVITA'' AZZERATE.' + SLineBreak + 'INIZIO SERATA.' );
   end;
+
+  // Chiude tutti i Prive
+  S:= TPrivStorage.Create(DirSaves + 'prive.j');
+  for I := 0 to MAXPRIVE-1 do begin
+    D:= S.LoadOne( I );
+    D.State := tsOff;
+    D.StartTime := 0;
+    D.EndTime := 0;
+    S.SaveOne(I, D );
+    APrive := PrivGrid.GetPriveByTag(I);
+    TPrivStatus(APrive.TagObject).Number := I;
+    TPrivStatus(APrive.TagObject).State := D.State;
+    TPrivStatus(APrive.TagObject).StartTime := D.StartTime;
+    TPrivStatus(APrive.TagObject).EndTime := D.EndTime;
+    PrivGrid.SetTileState ( I, D.State );
+  end;
+  S.Free;
+
+
 end;
 procedure TForm1.CancelSelectedPrive;
 begin
@@ -761,34 +785,7 @@ begin
 end;
 procedure TForm1.ExitMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-var
-  i: integer;
-  APrive: TPlane;
-  FoundON: boolean;
 begin
-  FoundON := False;
-  for I := 0 to MAXPRIVE-1 do begin
-    APrive := PrivGrid.GetPriveByTag(I);
-    if TPrivStatus(APrive.TagObject).State <> tsOff then begin
-      FoundON := True;
-      break;
-    end;
-  end;
-
-  if FoundON = true then begin
-
-    Confirm.Show( 'Alcuni privè sono attivi. Sei sicuro di volere uscire?' ,
-    procedure
-    begin
-      Application.Terminate;
-    end,
-    procedure
-    begin
-      Exit;
-    end
-  );
-  end;
-
   Application.Terminate;
 end;
 

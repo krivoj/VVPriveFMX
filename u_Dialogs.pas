@@ -402,7 +402,7 @@ begin
   box.Parent := FRoot;
   box.Align := TAlignLayout.Center;
   box.Width := 800;
-  box.Height := 300;
+  box.Height := 400;
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
@@ -545,7 +545,7 @@ var
   TextRect: TRectF;
 begin
   Btn := Sender as TButton;
-  Canvas.Fill.Color := $FFCCFFCC;
+  Canvas.Fill.Color := $FF00FF00;// $FFCCFFCC;
   Canvas.Fill.Kind := TBrushKind.Solid;
   Canvas.FillRect(ARect, 8, 8, AllCorners, 1);
   Canvas.Fill.Color := $FF000000;
