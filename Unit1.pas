@@ -53,6 +53,8 @@ type
     procedure PrintAllMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
+    procedure ExitMouseDown(Sender: TObject; Button: TMouseButton;
+    Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure GetGirlsByPrive ( PriveTag: Integer; var PriveGirls: TObjectList<TGirl> );
     function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
@@ -70,6 +72,7 @@ procedure SetTxtSelGirlVisible(AVisible: Boolean);
 
 const MAXGIRLS = 40;
 const MAXGIRLSPRIVE = 4;
+const MAXPRIVE = 15;
 var
   Form1: TForm1;
   FormReady: Boolean;
@@ -79,8 +82,8 @@ var
   TxtSelGirl: TText3d;
 
   MatMenu : TColorMaterialSource;
-  PlaneClearAllActivities,PlaneAddGirl,PlanePrintAll: TPlane;
-  TxtClearAllActivities,TxtAddGirl,TxtPrintAll : TText3D;
+  PlaneClearAllActivities,PlaneAddGirl,PlanePrintAll,PlaneExit: TPlane;
+  TxtClearAllActivities,TxtAddGirl,TxtPrintAll, TxtExit : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
 
   MBorder: TPlane;
@@ -147,7 +150,7 @@ begin
   TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
 
   S:= TPrivStorage.Create(DirSaves + 'prive.j');
-  for I := 0 to 14 do begin
+  for I := 0 to MAXPRIVE-1 do begin
     D:= S.LoadOne( I );
     APrive := PrivGrid.GetPriveByTag(I);
     TPrivStatus(APrive.TagObject).Number := I;
@@ -262,6 +265,38 @@ begin
   TxtPrintAll.Position.Z := 0.05;
   TxtPrintAll.RotationAngle.X := -180;
   TxtPrintAll.HitTest := false;
+
+
+  PlaneExit := TPlane.Create(Viewport3D1);
+  PlaneExit.Parent := Viewport3D1;
+  PlaneExit.Width := 2.2;
+  PlaneExit.Height := 0.5;
+  PlaneExit.MaterialSource := MatMenu;
+  PlaneExit.Position.X := 9;
+  PlaneExit.Position.Y := -5.65;
+  PlaneExit.HitTest := True;
+  PlaneExit.OnMouseDown := ExitMouseDown;
+  PlaneExit.Cursor := CrHandPoint;
+
+  // Testo identificativo della cella
+  TxtExit := TText3D.Create(PlaneExit);
+  TxtExit.Parent := PlaneExit;
+  TxtExit.Font.Size := 10;
+  TxtExit.WordWrap := False;
+  TxtExit.MaterialSource := MatMenuText;
+  TxtExit.Text := 'AGGIUNGI RAGAZZA';
+  TxtExit.HorzTextAlign := TTextAlign.Center;
+  TxtExit.VertTextAlign := TTextAlign.Center;
+// Posizione al centro del plane
+  TxtExit.Position.X := 0;
+  TxtExit.Position.Y := 0;
+  TxtExit.Depth := 0.00;
+  TxtExit.Scale.X := 0.70;
+  TxtExit.Scale.Y := 0.15;
+  //TxtExit.Stretch := false;
+  TxtExit.Position.Z := 0.05;
+  TxtExit.RotationAngle.X := -180;
+  TxtExit.HitTest := false;
 
 
   BorderMat := TColorMaterialSource.Create(Viewport3D1);
@@ -723,6 +758,38 @@ begin
   CancelSelectedPrive;
   AActivitiesDialog.PrintAllActivities;
 
+end;
+procedure TForm1.ExitMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
+var
+  i: integer;
+  APrive: TPlane;
+  FoundON: boolean;
+begin
+  FoundON := False;
+  for I := 0 to MAXPRIVE-1 do begin
+    APrive := PrivGrid.GetPriveByTag(I);
+    if TPrivStatus(APrive.TagObject).State <> tsOff then begin
+      FoundON := True;
+      break;
+    end;
+  end;
+
+  if FoundON = true then begin
+
+    Confirm.Show( 'Alcuni privè sono attivi. Sei sicuro di volere uscire?' ,
+    procedure
+    begin
+      Application.Terminate;
+    end,
+    procedure
+    begin
+      Exit;
+    end
+  );
+  end;
+
+  Application.Terminate;
 end;
 
 end.
