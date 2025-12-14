@@ -62,13 +62,8 @@ type
 
 
   end;
-  function CreateBlinkingText3D(
-    const AOwner: TFmxObject;       // es: Viewport3D
-    const TextStr: string;
-    const Pos: TVector3D;
-    const FontSize: Single = 12
-  ): TText3D;
-procedure SetTxtSelGirlVisible(AVisible: Boolean);
+  function CreateBlinkingText3D(const AOwner: TFmxObject; const TextStr: string ): TText3D;
+procedure SetTxtSelGirlVisible(AVisible: Boolean; APrive:TPlane);
 
 const MAXGIRLS = 40;
 const MAXGIRLSPRIVE = 4;
@@ -170,7 +165,7 @@ begin
   MatMenu.Color := TAlphaColorRec.Black;
 
 //  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
-  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
+  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza' );
 
   PlaneClearAllActivities := TPlane.Create(Viewport3D1);
   PlaneClearAllActivities.Parent := Viewport3D1;
@@ -383,7 +378,7 @@ begin
       SelectedPrive := -1;
       Exit;
     end;
-    SetTxtSelGirlVisible ( True );
+    SetTxtSelGirlVisible ( True, TPlane(Sender) );
   end
   else if TPrivStatus((Tplane(Sender)).TagObject).State <> tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
   begin
@@ -634,10 +629,12 @@ begin
 
 end;
 procedure TForm1.CancelSelectedPrive;
+var
+  APrive: TPlane;
 begin
-
+  APrive := PrivGrid.GetPriveByTag(SelectedPrive);
   SelectedPrive := -1;
-  SetTxtSelGirlVisible ( False );
+  SetTxtSelGirlVisible ( False, APrive );
   GirlGrid.UpdateGrid;
 
 end;
@@ -693,12 +690,7 @@ begin
 
 end;
 
-function CreateBlinkingText3D(
-  const AOwner: TFmxObject;       // es: Viewport3D
-  const TextStr: string;
-  const Pos: TVector3D;
-  const FontSize: Single = 12
-): TText3D;
+function CreateBlinkingText3D(const AOwner: TFmxObject;const TextStr: string): TText3D;
 var
   Txt: TText3D;
   Anim: TFloatAnimation;
@@ -709,22 +701,24 @@ begin
   Txt := TText3D.Create(AOwner);
   Txt.Parent := AOwner;
   Txt.Text := TextStr;
-  Txt.Position.Point := Pos;
-
-  Txt.Font.Size := FontSize;
+  //Txt.Position.Point := Pos;
+  Txt.Width := 50;
+  Txt.Height := 10;
+  Txt.Font.Size := 8;
   Txt.HorzTextAlign := TTextAlign.Center;
   Txt.VertTextAlign := TTextAlign.Center;
-  Txt.Opacity := 1.0;
-  Txt.Stretch := true;
-  Txt.WordWrap := false;
-  //Txt.Width := 40;
-  //Txt.Height := 20;
-  Txt.MaterialSource := MatMenu;
+  Txt.MaterialSource := MatMenuText;
+  Txt.Stretch := True;
   Txt.Depth := 0.01;
-  Txt.RotationAngle.X := -180;
-
-  Txt.Scale.X := 1;
-  Txt.Scale.Y := 0.35;
+  Txt.Scale.X := 0.04;
+  Txt.Scale.Y := 0.04;
+  Txt.Position.X := 1;
+  Txt.Position.Y := 0.85;
+  Txt.Position.Z := 0.01;
+  Txt.RotationAngle.X := 0;
+  Txt.RotationAngle.Y := 0;
+  Txt.RotationAngle.Z := 0;
+  Txt.HitTest := False;
   Txt.Visible := False;  // quando diventa visible → parte blinking
   // ------------------------
   // Animazione blinking
@@ -742,15 +736,13 @@ begin
 
   Result := Txt;
 end;
-procedure SetTxtSelGirlVisible(AVisible: Boolean);
+procedure SetTxtSelGirlVisible(AVisible: Boolean; APrive:TPlane);
 var
   Anim: TFloatAnimation;
 begin
-  if TxtSelGirl = nil then Exit;
-
   // imposta la visibilità
   TxtSelGirl.Visible := AVisible;
-
+  TxtSelGirl.Parent := APrive;
   // trova l'animazione creata in CreateBlinkingText3D (nome 'BlinkAnim')
   if TxtSelGirl.FindComponent('BlinkAnim') is TFloatAnimation then
   begin
