@@ -47,6 +47,7 @@ type
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
     procedure SetTileStateInternal(ATile: TPlane; AState: TPrivState);
+    function FindSwitchTile(ATile: TPlane): TPlane;
 
   public
     OnTileMouseDown: TTileMouseDownEvent;
@@ -60,7 +61,7 @@ type
     procedure SetTileState(Col, Row: Integer; State: TPrivState); overload;
     procedure SetTileState(Tag: Integer; State: TPrivState); overload;
     procedure SetBasePosition(BaseX, BaseY: Single);
-    procedure ToggleTileState(ImgPlane: TPlane);
+    procedure ToggleTileState(SwitchPlane: TPlane);
     function GetPriveByTag(Tag: Integer): TPlane;
     procedure UpdateCountdowns;
   end;
@@ -181,6 +182,7 @@ begin
 
       ImgSwitch := TPlane.Create(FViewport);
       ImgSwitch.Parent := Plane;
+      ImgSwitch.TagFloat := 2;
       ImgSwitch.Width := FTileWidth * 0.16;
       ImgSwitch.Height := FTileHeight * 0.16;
       ImgSwitch.Position.X := 1;
@@ -197,6 +199,7 @@ begin
 
       ImgAdd := TPlane.Create(FViewport);
       ImgAdd.Parent := Plane;
+      ImgAdd.TagFloat := 1;
       ImgAdd.Width := FTileWidth * 0.16;
       ImgAdd.Height := FTileHeight * 0.16;
       ImgAdd.Position.X := -1  ;
@@ -330,22 +333,64 @@ begin
 end;
 procedure TPrivGrid.SetTileStateInternal(ATile: TPlane; AState: TPrivState);
 var
-  ImgMat : TTextureMaterialSource;
+  SwitchTile: TPlane;
+  ImgMat: TTextureMaterialSource;
+  NewColor: TAlphaColor;
+  StatusText: string;
 begin
-  ImgMat := ATile.MaterialSource as TTextureMaterialSource;
+  // --- materiale tile principale ---
   case AState of
-    tsOff: begin
-              ATile.MaterialSource := MatOff;
-           end;
-    tsOn: Begin
-              ATile.MaterialSource := MatOn;
-          end;
-    tsAlarm: begin
-              ATile.MaterialSource := MatAlarm;
-          end;
+    tsOff:
+      ATile.MaterialSource := MatOff;
+    tsOn:
+      ATile.MaterialSource := MatOn;
+    tsAlarm:
+      ATile.MaterialSource := MatAlarm;
+  end;
+
+  // --- trova il sottotile switch ---
+  SwitchTile := FindSwitchTile(ATile);
+  if not Assigned(SwitchTile) then Exit;
+
+  ImgMat := SwitchTile.MaterialSource as TTextureMaterialSource;
+
+  // --- testo e colore ---
+  case AState of
+    tsOff:
+      begin
+        NewColor := TAlphaColorRec.Limegreen;
+        StatusText := 'ON';
+      end;
+    tsOn, tsAlarm:
+      begin
+        NewColor := TAlphaColorRec.Crimson;
+        StatusText := 'OFF';
+      end;
+  end;
+
+  // --- ridisegna bitmap ---
+  ImgMat.Texture.SetSize(128,128);
+  MakeRoundedBitmap(ImgMat.Texture, NewColor, StatusText);
+
+  SwitchTile.Repaint;
+end;
+function TPrivGrid.FindSwitchTile(ATile: TPlane): TPlane;
+var
+  I: Integer;
+  Obj: TFmxObject;
+begin
+  Result := nil;
+  for I := 0 to ATile.ChildrenCount - 1 do
+  begin
+    Obj := ATile.Children[I];
+    if (Obj is TPlane) and
+       (TPlane(Obj).TagFloat = 2) then
+    begin
+      Result := TPlane(Obj);
+      Exit;
+    end;
   end;
 end;
-
 procedure TPrivGrid.SetTileState(Col, Row: Integer; State: TPrivState);
 begin
   if (Col >= 0) and (Col < FCols) and (Row >= 0) and (Row < FRows) then
@@ -373,7 +418,7 @@ begin
   Result := nil;
   for Y := 0 to FRows - 1 do
     for X := 0 to FCols - 1 do
-      if Assigned(FTiles[X,Y]) and (FTiles[X,Y].Tag = Tag) then
+      if FTiles[X,Y].Tag = Tag then
       begin
         Result := FTiles[X,Y];
         Exit;
@@ -415,20 +460,20 @@ begin
     ABitmap.Canvas.EndScene;
   end;
 end;
-procedure TPrivGrid.ToggleTileState(ImgPlane: TPlane);
+procedure TPrivGrid.ToggleTileState(SwitchPlane: TPlane);
 var
   Data: TPrivStatus;
   ImgMat: TTextureMaterialSource;
-  NewColor: TAlphaColor;
   MainTile: TPlane;
+  NewColor: TAlphaColor;
   StatusText: string;
   OldState: TPrivState;
 
   S: TPrivStorage;
   D: TPrivData;
 begin
-  Data := TPrivStatus(ImgPlane.TagObject);
-  ImgMat := ImgPlane.MaterialSource as TTextureMaterialSource;
+  Data := TPrivStatus(SwitchPlane.TagObject);
+  ImgMat := SwitchPlane.MaterialSource as TTextureMaterialSource;
 
   OldState := Data.State;  // ← memorizzi lo stato precedente
 
@@ -457,7 +502,7 @@ begin
   MakeRoundedBitmap(ImgMat.Texture, NewColor, StatusText);
 
   // Aggiorna il tile principale
-  MainTile := GetPriveByTag(ImgPlane.Tag);
+  MainTile := GetPriveByTag(SwitchPlane.Tag);
   if Assigned(MainTile) then
     SetTileStateInternal(MainTile, Data.State);
 
@@ -468,7 +513,7 @@ begin
   D.StartTime := Data.StartTime;
   D.EndTime := Data.EndTime;
   // salvo solo quel prive
-  S.SaveOne(ImgPlane.Tag, D);
+  S.SaveOne(SwitchPlane.Tag, D);
   S.Free;
 
 
