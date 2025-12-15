@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
-  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,u_Dialogs, u_PrivStorage,
+  System.Math.Vectors, System.Generics.Collections, FMX.Graphics, FMX.Controls, FMX.Objects,u_Dialogs, u_PrivStorage,u_lang,
   FMX.Types3D, FMX.Types, FMX.Controls3D, FMX.Objects3D, FMX.MaterialSources, FMX.Viewport3D;
 
 type
@@ -296,14 +296,13 @@ begin
     //se non ci sono ragazze exit.
     form1.GetGirlsByPrive( TPlane(Sender).Tag , TmpPriveGirls );
     if TmpPriveGirls.Count = 0 then begin
-      MessageDialog.Show('Nel privè non sono presenti ragazze.');
+      MessageDialog.Show(L(STR_NO_GIRLS_IN_PRIVE));
       if Assigned(OnSwitchMouseDown) then
         OnSwitchMouseDown(Sender, Button, Shift, TPlane(Sender).Tag);
       exit;
     end;
 
-    SpinDialog.Show(
-    'Durata del Privè (minuti)',
+    SpinDialog.Show( L(STR_PRIV_DURATION_TITLE),
     procedure(Minuti: Integer)
     begin
       Data.Duration := Minuti;
@@ -359,12 +358,12 @@ begin
     tsOff:
       begin
         NewColor := TAlphaColorRec.Limegreen;
-        StatusText := 'ON';
+        StatusText := L(STR_ON);
       end;
     tsOn, tsAlarm:
       begin
         NewColor := TAlphaColorRec.Crimson;
-        StatusText := 'OFF';
+        StatusText := L(STR_OFF);
       end;
   end;
 
@@ -481,13 +480,13 @@ begin
     tsOff: begin
       Data.State := tsOn;
       NewColor := TAlphaColorRec.Limegreen;
-      StatusText := 'ON';
+      StatusText := L(STR_ON);
       Data.StartTime := Now;
     end;
     tsOn,tsAlarm: begin
       Data.State := tsOff;
       NewColor := TAlphaColorRec.Crimson;
-      StatusText := 'OFF';
+      StatusText := L(STR_OFF);
       //Data.StartTime := 0;
     end;
     else Exit;

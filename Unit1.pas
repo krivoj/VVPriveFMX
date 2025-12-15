@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,
-  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage,
+  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage, u_lang,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources, FMX.Types3d, system.Math,
@@ -105,6 +105,7 @@ var
   I: integer;
   APrive: TPlane;
 begin
+  CurrentLang := lgEN;
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
   SelectedPrive := -1;
@@ -165,7 +166,7 @@ begin
   MatMenu.Color := TAlphaColorRec.Black;
 
 //  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
-  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza' );
+  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, L(STR_SELECT_GIRL) );
 
   PlaneClearAllActivities := TPlane.Create(Viewport3D1);
   PlaneClearAllActivities.Parent := Viewport3D1;
@@ -184,7 +185,7 @@ begin
   TxtClearAllActivities.Font.Size := 10;
   TxtClearAllActivities.WordWrap := False;
   TxtClearAllActivities.MaterialSource := MatMenuText;
-  TxtClearAllActivities.Text := 'AZZERA ATTIVITA''';
+  TxtClearAllActivities.Text := L(STR_CLEAR_ACTIVITIES);
   TxtClearAllActivities.HorzTextAlign := TTextAlign.Center;
   TxtClearAllActivities.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -215,7 +216,7 @@ begin
   TxtAddGirl.Font.Size := 10;
   TxtAddGirl.WordWrap := False;
   TxtAddGirl.MaterialSource := MatMenuText;
-  TxtAddGirl.Text := 'AGGIUNGI RAGAZZA';
+  TxtAddGirl.Text := L(STR_ADD_GIRL);
   TxtAddGirl.HorzTextAlign := TTextAlign.Center;
   TxtAddGirl.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -247,7 +248,7 @@ begin
   TxtPrintAll.Font.Size := 10;
   TxtPrintAll.WordWrap := False;
   TxtPrintAll.MaterialSource := MatMenuText;
-  TxtPrintAll.Text := 'STAMPA ATTIVITA''';
+  TxtPrintAll.Text := L(STR_PRINT_ACTIVITIES);
   TxtPrintAll.HorzTextAlign := TTextAlign.Center;
   TxtPrintAll.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -279,7 +280,7 @@ begin
   TxtExit.Font.Size := 10;
   TxtExit.WordWrap := False;
   TxtExit.MaterialSource := MatMenuText2;
-  TxtExit.Text := 'ESCI';
+  TxtExit.Text :=  L(STR_EXIT);
   TxtExit.HorzTextAlign := TTextAlign.Center;
   TxtExit.VertTextAlign := TTextAlign.Center;
 // Posizione al centro del plane
@@ -374,7 +375,7 @@ begin
   if TPrivStatus((Tplane(Sender)).TagObject).State = tsOff  then begin
     if GetGirlsCountByPrive ( SelectedPrive ) >= MAXGIRLSPRIVE then
     begin
-      MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' ragazze in un privè.') ;
+      MessageDialog.Show(Format(L(STR_MAX_GIRLS_PRIVE), [MAXGIRLSPRIVE]));
       SelectedPrive := -1;
       Exit;
     end;
@@ -382,7 +383,7 @@ begin
   end
   else if TPrivStatus((Tplane(Sender)).TagObject).State <> tsOff then   { non puoi aggiungere ragazze ad un privè in corso , tsOn, tsAlaram }
   begin
-    MessageDialog.Show( 'Non puoi aggiungere una ragazza se il privè è attivo.' );
+    MessageDialog.Show(L(STR_PRIVE_ACTIVE_NO_ADD));
     SelectedPrive := -1;
   end;
 
@@ -410,7 +411,7 @@ begin
          {  se il privè è durato troppo poco chiedo }
         if (Now - Data.StartTime) < (5 / 1440) then   // meno di 5 minuti
         begin
-        Confirm.Show( 'Il Privè è durato meno di 5 minuti. registro comunque l''attività?' + sLineBreak ,
+        Confirm.Show(L(STR_PRIVE_SHORT_CONFIRM) + sLineBreak,
           procedure
           begin
             //
@@ -447,8 +448,7 @@ begin
 
   if AGirl.Prive < 0 then begin
     if FileExists (dirSaves + Tag + '.json' ) then
-    Confirm.Show(
-      'Vuoi davvero cancellare questa ragazza?' + sLineBreak + Uppercase(Tag),
+      Confirm.Show(Format(L(STR_DELETE_GIRL_CONFIRM), [UpperCase(Tag)]),
       procedure
       begin
         // YES
@@ -466,7 +466,7 @@ begin
     APrive := PrivGrid.GetPriveByTag(AGirl.Prive);
     case TPrivStatus (APrive.TagObject).State of
       tsOn,tsAlarm: begin
-        MessageDialog.Show( 'Non puoi rimuovere una ragzza se il privè è attivo.' );
+        MessageDialog.Show(L(STR_CANNOT_REMOVE_ACTIVE));
       end;
       tsOff: begin
         AGirl.Prive := -1; // la rimette enlla GirlGrid
@@ -511,7 +511,7 @@ begin
           AGirl.Prive := SelectedPrive;
           AGirl.Start := 0; // lo start lo setta lo Switch
         end
-        else MessageDialog.Show ( 'Massimo ' + MAXGIRLSPRIVE.ToString + ' ragazze in un privè.') ;
+        else MessageDialog.Show(Format(L(STR_MAX_GIRLS_PRIVE), [MAXGIRLSPRIVE]));
       end;
     end;
 
@@ -539,19 +539,19 @@ begin
   begin
 
     InputGirl.Show(
-      'Aggiungi ragazza, digita il nome.',
+      L(STR_ADD_GIRL_TITLE),
       procedure
       begin
         // YES
         Name := Trim(InputGirl.FEdit.Text);
         if Length(Name) <= 0 then
         begin
-          ShowMessage('Inserisci un nome.');
+          ShowMessage(L(STR_ENTER_NAME));
           Exit;
         end;
         if not System.IOUtils.TPath.HasValidFileNameChars(Name, False) then
         begin
-          ShowMessage('Inserisci un nome senza caratteri speciali.');
+          ShowMessage(L(STR_INVALID_NAME));
           Exit;
         end;
         if not FileExists(DirSaves + Name + '.json') then
@@ -571,7 +571,7 @@ begin
         end
         else
         begin
-          ShowMessage(Name + ' è già presente');
+          ShowMessage(Format(L(STR_GIRL_ALREADY_EXISTS), [Name]));
         end;
       end,
       procedure
@@ -583,48 +583,61 @@ begin
 
   end
   else
-    ShowMessage('Puoi gestire al massimo ' +  MAXGIRLS.ToString + ' ragazze');
+    ShowMessage(Format(L(STR_MAX_GIRLS_TOTAL), [MAXGIRLS]));
 end;
 procedure TForm1.ClearAllActivitiesMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
-var
-  GirlStorage: TGirlStorage;
-  Files: TStringDynArray;
-  FileName, GirlName: string;
-  S: TPrivStorage;
-  I: Integer;
-  D: TPrivdata;
-  APrive: TPlane;
 begin
-  Files := TDirectory.GetFiles(DirSaves, '*.json');
+  Confirm.Show(L(STR_CLEAR_ALL_CONFIRM),
+    procedure
+    var
+      GirlStorage: TGirlStorage;
+      Files: TStringDynArray;
+      FileName, GirlName: string;
+      S: TPrivStorage;
+      I: Integer;
+      D: TPrivdata;
+      APrive: TPlane;
 
-  // Azzera i file Json delle Girls
-  for FileName in Files do
-  begin
-    GirlStorage := TGirlStorage.Create;
-    GirlName := UpperCase( system.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
-    GirlStorage.ClearActivities (GirlName);
-    GirlStorage.Free;
+    begin
+      Files := TDirectory.GetFiles(DirSaves, '*.json');
 
-    MessageDialog.Show('ATTIVITA'' AZZERATE.' + SLineBreak + 'INIZIO SERATA.' );
-  end;
+      // Azzera i file Json delle Girls
+      for FileName in Files do
+      begin
+        GirlStorage := TGirlStorage.Create;
+        GirlName := UpperCase( system.IOUtils.TPath.GetFileNameWithoutExtension(FileName));
+        GirlStorage.ClearActivities (GirlName);
+        GirlStorage.Free;
+      end;
 
-  // Chiude tutti i Prive
-  S:= TPrivStorage.Create(DirSaves + 'prive.j');
-  for I := 0 to MAXPRIVE-1 do begin
-    D:= S.LoadOne( I );
-    D.State := tsOff;
-    D.StartTime := 0;
-    D.EndTime := 0;
-    S.SaveOne(I, D );
-    APrive := PrivGrid.GetPriveByTag(I);
-    TPrivStatus(APrive.TagObject).Number := I;
-    TPrivStatus(APrive.TagObject).State := D.State;
-    TPrivStatus(APrive.TagObject).StartTime := D.StartTime;
-    TPrivStatus(APrive.TagObject).EndTime := D.EndTime;
-    PrivGrid.SetTileState ( I, D.State );
-  end;
-  S.Free;
+      // Chiude tutti i Prive
+      S:= TPrivStorage.Create(DirSaves + 'prive.j');
+      for I := 0 to MAXPRIVE-1 do begin
+        D:= S.LoadOne( I );
+        D.State := tsOff;
+        D.StartTime := 0;
+        D.EndTime := 0;
+        S.SaveOne(I, D );
+        APrive := PrivGrid.GetPriveByTag(I);
+        TPrivStatus(APrive.TagObject).Number := I;
+        TPrivStatus(APrive.TagObject).State := D.State;
+        TPrivStatus(APrive.TagObject).StartTime := D.StartTime;
+        TPrivStatus(APrive.TagObject).EndTime := D.EndTime;
+        PrivGrid.SetTileState ( I, D.State );
+      end;
+      S.Free;
+
+      MessageDialog.Show(L(STR_ACTIVITIES_RESET));
+
+    end,
+    procedure
+    begin
+      CancelSelectedPrive;
+      Exit;
+    end
+  );
+
 
 
 end;
@@ -709,12 +722,12 @@ begin
   Txt.VertTextAlign := TTextAlign.Center;
   Txt.MaterialSource := MatMenuText;
   Txt.Stretch := True;
-  Txt.Depth := 0.01;
+  Txt.Depth := 0.15;
   Txt.Scale.X := 0.04;
   Txt.Scale.Y := 0.04;
   Txt.Position.X := 1;
   Txt.Position.Y := 0.85;
-  Txt.Position.Z := 0.01;
+  Txt.Position.Z := 0.03;
   Txt.RotationAngle.X := 0;
   Txt.RotationAngle.Y := 0;
   Txt.RotationAngle.Z := 0;

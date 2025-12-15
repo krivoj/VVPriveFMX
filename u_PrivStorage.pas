@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.JSON, System.IOUtils;
+  System.SysUtils, System.Classes, System.JSON, System.IOUtils,u_lang;
 
 type
   TPrivState = (tsOff, tsOn, tsAlarm);

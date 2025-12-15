@@ -21,7 +21,8 @@ uses
   u_GirlStorage in 'u_GirlStorage.pas',
   u_Dialogs in 'u_Dialogs.pas',
   u_ActivitiesDialog in 'u_ActivitiesDialog.pas',
-  u_PrivStorage in 'u_PrivStorage.pas';
+  u_PrivStorage in 'u_PrivStorage.pas',
+  u_lang in 'u_lang.pas';
 
 {$R *.res}
 

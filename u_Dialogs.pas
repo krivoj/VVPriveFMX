@@ -3,7 +3,7 @@ unit u_Dialogs;
 interface
 
 uses
-  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.Text, FMX.Types3D, System.Math.Vectors,
+  System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.Text, FMX.Types3D, System.Math.Vectors,u_lang,
   FMX.StdCtrls, FMX.Graphics, FMX.Edit, FMX.Objects3D,FMX.MaterialSources;
 
 type
@@ -138,7 +138,7 @@ begin
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
   cancel.Width := 380;
-  cancel.Text := 'NO';
+  cancel.Text :=  L(STR_NO);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickNo;
   cancel.StyledSettings := [];
@@ -149,7 +149,7 @@ begin
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
   ok.Width := 380;
-  ok.Text := 'SI';
+  ok.Text :=  L(STR_YES);
   ok.Margins.Left := 40;
   ok.OnClick := ClickYes;
   ok.StyledSettings := [];
@@ -282,7 +282,7 @@ begin
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
   cancel.Width := 380;
-  cancel.Text := 'Annulla';
+  cancel.Text := L(STR_CANCEL);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickCancel;
   cancel.StyledSettings := [];
@@ -293,7 +293,7 @@ begin
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
   ok.Width := 380;
-  ok.Text := 'Aggiungi';
+  ok.Text := L(STR_OK_ADD);
   ok.Margins.Left := 40;
   ok.OnClick := ClickConfirm;
   ok.StyledSettings := [];
@@ -467,7 +467,7 @@ begin
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
   cancel.Width := 380;
-  cancel.Text := 'Annulla';
+  cancel.Text := L(STR_CANCEL);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickCancel;
   cancel.StyledSettings := [];
@@ -478,7 +478,7 @@ begin
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
   ok.Width := 380;
-  ok.Text := 'Conferma';
+  ok.Text := L(STR_OK_CONFIRM);
   ok.Margins.Left := 40;
   ok.OnClick := ClickConfirm;
   ok.StyledSettings := [];
@@ -637,7 +637,7 @@ begin
   ok.Margins.Left := 10;
   ok.Margins.Right := 10;
   ok.Margins.Bottom := 10;
-  ok.Text := 'OK';
+  ok.Text := L(STR_CLOSE);
   ok.StyledSettings := [];
   ok.OnClick := ClickOk;
   ok.OnPaint := PaintOk;

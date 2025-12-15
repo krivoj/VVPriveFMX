@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types,
   System.Generics.Collections,
-  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes, FMX.Memo,
+  FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes, FMX.Memo, u_lang,
   FMX.Objects, FMX.Graphics,
   FMX.Printer, FMX.Dialogs,                // << aggiunte per la stampa
   u_GirlStorage, System.IOUtils, System.DateUtils;
@@ -180,7 +180,7 @@ begin
   FBtnPrint.Parent := BtnBar;
   FBtnPrint.Align := TAlignLayout.Left;
   FBtnPrint.Width := 250;
-  FBtnPrint.Text := 'Stampa';
+  FBtnPrint.Text := L(STR_PRINT);
   FBtnPrint.OnClick := BtnPrintClick;
   FBtnPrint.Cursor := CrHandPoint;
   FBtnPrint.OnPaint := PaintPrint;
@@ -189,7 +189,7 @@ begin
   FBtnClose.Parent := BtnBar;
   FBtnClose.Align := TAlignLayout.Right;
   FBtnClose.Width := 250;
-  FBtnClose.Text := 'Chiudi';
+  FBtnClose.Text :=  L(STR_CLOSE);
   FBtnClose.OnClick := BtnCloseClick;
   FBtnClose.Cursor := CrHandPoint;
   FBtnClose.OnPaint := PaintClose;
@@ -233,15 +233,15 @@ var
 begin
   Output := TStringList.Create;
   try
-    Output.Add(Format('REGISTRO ATTIVITÀ PRIVÈ – %s', [FCurrentGirl]));
+    Output.Add(Format(L(STR_ACTIVITY_LOG_TITLE), [FCurrentGirl]));
     Output.Add(StringOfChar('-', 70));
     Output.Add('');
     Output.Add(
       //Fix('Ragazza',12)+' '+
-      Fix('Prive',14)+' '+
-      Fix('Inizio',25)+' '+
-      Fix('Fine',25)+' '+
-      Fix('Durata',8)
+      Fix(L(STR_PRIVE),14)+' '+
+      Fix(L(STR_START),25)+' '+
+      Fix(L(STR_END),25)+' '+
+      Fix(L(STR_DURATION),8)
     );
     Output.Add(
       //StringOfChar('-',12)+' '+
@@ -337,7 +337,7 @@ var
 begin
   Output := TStringList.Create;
   try
-    Output.Add('REGISTRO COMPLETO ATTIVITÀ PRIVÈ');
+    Output.Add(L(STR_ACTIVITY_LOG_COMPLETE_TITLE));
     Output.Add(StringOfChar('=', 70));
     Output.Add('');
 
@@ -350,12 +350,11 @@ begin
 
       Output.Add('--- '+GirlName+' ---');
       Output.Add(
-        Fix('Ragazza',10)+' '+
-        Fix('Prive',10)+' '+
-        Fix('Inizio',30)+' '+
-        Fix('Fine',20)+' '+
-        Fix('Durata',20)
-      );
+        Fix(L(STR_GIRL), 10)+' '+
+        Fix(L(STR_PRIVE), 10)+' '+  // se vuoi tradurre "Prive" come titolo colonna
+        Fix(L(STR_START), 30)+' '+
+        Fix(L(STR_END), 20)+' '+
+        Fix(L(STR_DURATION), 20)      );
       Output.Add(
         StringOfChar('-',10)+' '+
         StringOfChar('-',10)+' '+
@@ -433,7 +432,7 @@ begin
   FBtnPrint.Parent := BtnBar;
   FBtnPrint.Align := TAlignLayout.Left;
   FBtnPrint.Width := 300;
-  FBtnPrint.Text := 'Stampa';
+  FBtnPrint.Text := L(STR_PRINT);
   FBtnPrint.Cursor := CrHandPoint;
   FBtnPrint.OnClick := BtnPrintClick;
 
@@ -441,7 +440,7 @@ begin
   FBtnClose.Parent := BtnBar;
   FBtnClose.Align := TAlignLayout.Right;
   FBtnClose.Width := 300;
-  FBtnClose.Text := 'Chiudi';
+  FBtnClose.Text := L(STR_CLOSE);
   FBtnClose.Cursor := CrHandPoint;
   FBtnClose.OnClick := BtnCloseClick;
 end;
@@ -503,4 +502,3 @@ begin
 end;
 
 end.
-
