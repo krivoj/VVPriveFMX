@@ -17,6 +17,7 @@ type
     Camera1: TCamera;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure StartApplication;
     procedure TimerPriveTimer(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -88,7 +89,7 @@ var
   InputGirl: TInputDialog;
   AActivitiesDialog: TActivitiesDialog;
   MessageDialog: TMessageDialog;
-
+  ALangDialog : TLangDialog;
   PriveSlot : Array[0..MAXGIRLSPRIVE-1] of TPoint3d;
 
 implementation
@@ -99,13 +100,23 @@ implementation
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
+begin
+ALangDialog := TLangDialog.Create(
+    Self,
+    Self,
+    StartApplication   // ← QUI riparte tutto
+  );
+
+  ALangDialog.Show;
+  Exit; // 🔴 fondamentale
+end;
+procedure TForm1.StartApplication;
 var
   S: TPrivStorage;
   D: TPrivData;
   I: integer;
   APrive: TPlane;
 begin
-  CurrentLang := lgEN;
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
   ForceDirectories(DirSaves);
   SelectedPrive := -1;
@@ -310,7 +321,9 @@ begin
 
   SetupCameraTopView;
   TimerPrive.Enabled := true;
+
 end;
+
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin

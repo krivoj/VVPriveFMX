@@ -1,5 +1,5 @@
 unit u_Dialogs;
-
+{$R Images.res}
 interface
 
 uses
@@ -79,6 +79,26 @@ type
       procedure Show(const Msg: string; OnOk: TProc = nil);
       procedure Hide;
   end;
+
+type
+  TLangDialog = class
+  private
+    FOwner      : TComponent;
+    FRoot       : TLayout;
+    FOnSelected : TProc;
+
+    procedure FlagClick(Sender: TObject);
+  public
+    constructor Create(
+      AOwner: TComponent;
+      AParent: TFmxObject;
+      AOnSelected: TProc
+    );
+
+    procedure Show;
+    procedure Hide;
+  end;
+
 implementation
 
 { TConfirmDialog }
@@ -675,4 +695,123 @@ begin
   TextRect := ARect;
   Canvas.FillText(TextRect, Btn.Text, False, 1, [], TTextAlign.Center, TTextAlign.Center);
 end;
+
+
+constructor TLangDialog.Create(
+  AOwner: TComponent;
+  AParent: TFmxObject;
+  AOnSelected: TProc
+);
+var
+  bg, box : TRectangle;
+  Grid    : TLayout;
+  RS      : TResourceStream;
+  MatFlag : array[0..5] of TTextureMaterialSource;
+  Plane   : TPlane;
+  I       : Integer;
+
+const
+  ResNames: array[0..5] of string = (
+    'PNG_LANG_IT',
+    'PNG_LANG_EN',
+    'PNG_LANG_FR',
+    'PNG_LANG_DE',
+    'PNG_LANG_ES',
+    'PNG_LANG_RU'
+  );
+
+begin
+  FOwner      := AOwner;
+  FOnSelected := AOnSelected;
+
+  // ---------------------------------------------------------------------------
+  // ROOT (overlay modale)
+  // ---------------------------------------------------------------------------
+  FRoot := TLayout.Create(AOwner);
+  FRoot.Parent := AParent;
+  FRoot.Align := TAlignLayout.Contents;
+  FRoot.Visible := False;
+  FRoot.HitTest := True;
+  FRoot.Opacity := 0;
+
+  // sfondo scuro
+  bg := TRectangle.Create(FRoot);
+  bg.Parent := FRoot;
+  bg.Align := TAlignLayout.Contents;
+  bg.Fill.Color := $88000000;
+  bg.Stroke.Kind := TBrushKind.None;
+
+  // box centrale
+  box := TRectangle.Create(FRoot);
+  box.Parent := FRoot;
+  box.Align := TAlignLayout.Center;
+  box.Width := 900;
+  box.Height := 300;
+  box.XRadius := 20;
+  box.YRadius := 20;
+  box.Fill.Color := $FFFFFFFF;
+
+  // layout bandiere
+  Grid := TLayout.Create(box);
+  Grid.Parent := box;
+  Grid.Align := TAlignLayout.Center;
+  Grid.Width := 840;
+  Grid.Height := 180;
+
+  // ---------------------------------------------------------------------------
+  // carico materiali bandiere
+  // ---------------------------------------------------------------------------
+  for I := 0 to 5 do
+  begin
+    RS := TResourceStream.Create(HInstance, ResNames[I], RT_RCDATA);
+    MatFlag[I] := TTextureMaterialSource.Create(AOwner);
+    MatFlag[I].Texture.LoadFromStream(RS);
+    RS.Free;
+  end;
+
+  // ---------------------------------------------------------------------------
+  // creo planes bandiere
+  // ---------------------------------------------------------------------------
+  for I := 0 to 5 do
+  begin
+    Plane := TPlane.Create(Grid);
+    Plane.Parent := Grid;
+    Plane.Width := 120;
+    Plane.Height := 80;
+    Plane.Position.X := -300 + (I * 120);
+    Plane.Position.Y := 0;
+    Plane.MaterialSource := MatFlag[I];
+    Plane.Tag := I;              // mapping diretto TLang
+    Plane.HitTest := True;
+    Plane.OnClick := FlagClick;
+  end;
+end;
+
+procedure TLangDialog.FlagClick(Sender: TObject);
+begin
+  // set lingua
+  CurrentLang := TLang(TControl(Sender).Tag);
+
+  Hide;
+
+  // riprende l'applicazione
+  if Assigned(FOnSelected) then
+    FOnSelected;
+end;
+
+procedure TLangDialog.Show;
+begin
+  FRoot.Visible := True;
+  FRoot.Opacity := 1;
+end;
+
+procedure TLangDialog.Hide;
+begin
+  FRoot.Visible := False;
+end;
+
+end.
+
+
+
 end.
