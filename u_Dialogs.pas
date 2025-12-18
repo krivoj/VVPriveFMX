@@ -704,12 +704,10 @@ constructor TLangDialog.Create(
 );
 var
   bg, box : TRectangle;
-  Grid    : TLayout;
+  Img     : TImage;
   RS      : TResourceStream;
-  MatFlag : array[0..5] of TTextureMaterialSource;
-  Plane   : TPlane;
   I       : Integer;
-
+  Frame : TRectangle;
 const
   ResNames: array[0..5] of string = (
     'PNG_LANG_IT',
@@ -719,14 +717,11 @@ const
     'PNG_LANG_ES',
     'PNG_LANG_RU'
   );
-
 begin
   FOwner      := AOwner;
   FOnSelected := AOnSelected;
 
-  // ---------------------------------------------------------------------------
-  // ROOT (overlay modale)
-  // ---------------------------------------------------------------------------
+  // ROOT overlay
   FRoot := TLayout.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
@@ -751,40 +746,43 @@ begin
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
 
-  // layout bandiere
-  Grid := TLayout.Create(box);
-  Grid.Parent := box;
-  Grid.Align := TAlignLayout.Center;
-  Grid.Width := 840;
-  Grid.Height := 180;
+  // bandiere (TImage)
+for I := 0 to 5 do
+begin
+  // frame con bordo
+  Frame := TRectangle.Create(box);
+  Frame.Parent := box;
 
-  // ---------------------------------------------------------------------------
-  // carico materiali bandiere
-  // ---------------------------------------------------------------------------
-  for I := 0 to 5 do
-  begin
-    RS := TResourceStream.Create(HInstance, ResNames[I], RT_RCDATA);
-    MatFlag[I] := TTextureMaterialSource.Create(AOwner);
-    MatFlag[I].Texture.LoadFromStream(RS);
-    RS.Free;
-  end;
+  Frame.Width := 124;
+  Frame.Height := 84;
+  Frame.Position.X := 28 + (I * 140);
+  Frame.Position.Y := (box.Height - Frame.Height) / 2;
 
-  // ---------------------------------------------------------------------------
-  // creo planes bandiere
-  // ---------------------------------------------------------------------------
-  for I := 0 to 5 do
-  begin
-    Plane := TPlane.Create(Grid);
-    Plane.Parent := Grid;
-    Plane.Width := 120;
-    Plane.Height := 80;
-    Plane.Position.X := -300 + (I * 120);
-    Plane.Position.Y := 0;
-    Plane.MaterialSource := MatFlag[I];
-    Plane.Tag := I;              // mapping diretto TLang
-    Plane.HitTest := True;
-    Plane.OnClick := FlagClick;
-  end;
+  Frame.Fill.Kind := TBrushKind.None;
+  Frame.Stroke.Color := $FF444444;   // colore bordo
+  Frame.Stroke.Thickness := 2;       // spessore
+  Frame.XRadius := 6;
+  Frame.YRadius := 6;
+
+  Frame.HitTest := True;
+  Frame.Cursor := crHandPoint;
+  Frame.Tag := I;
+  Frame.OnClick := FlagClick;
+
+  // immagine bandiera
+  Img := TImage.Create(Frame);
+  Img.Parent := Frame;
+  Img.Align := TAlignLayout.Client;
+  Img.Margins.Left := 2;
+  Img.Margins.Top := 2;
+  Img.Margins.Right := 2;
+  Img.Margins.Bottom := 2;
+  Img.HitTest := False; // click gestito dal frame
+
+  RS := TResourceStream.Create(HInstance, ResNames[I], RT_RCDATA);
+  Img.Bitmap.LoadFromStream(RS);
+  RS.Free;
+end;
 end;
 
 procedure TLangDialog.FlagClick(Sender: TObject);
