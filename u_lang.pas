@@ -57,7 +57,7 @@ var
   STR_ACTIVITIES_RESET: TLangArray;
   STR_CANCEL, STR_OK_ADD, STR_OK_CONFIRM,STR_PRIVE: TLangArray;
   CurrentLang: TLang = lgIT;
-
+  STR_TRIAL_EXPIRED: TLangArray;
 // -----------------------------------------------------------------------------
 // STRINGS PER u_ActivitiesDialog
 // -----------------------------------------------------------------------------
@@ -363,6 +363,14 @@ initialization
   STR_DURATION[lgDE] := 'Dauer';
   STR_DURATION[lgES] := 'Duración';
   STR_DURATION[lgRU] := 'Длительность';
+
+  // STR_TRIAL_EXPIRED
+  STR_TRIAL_EXPIRED[lgIT] := 'Periodo di prova scaduto';
+  STR_TRIAL_EXPIRED[lgEN] := 'Trial period expired';
+  STR_TRIAL_EXPIRED[lgFR] := 'Période d''essai expirée';
+  STR_TRIAL_EXPIRED[lgDE] := 'Testzeitraum abgelaufen';
+  STR_TRIAL_EXPIRED[lgES] := 'Período de prueba caducado';
+  STR_TRIAL_EXPIRED[lgRU] := 'Пробный период истёк';
 
 end.
 

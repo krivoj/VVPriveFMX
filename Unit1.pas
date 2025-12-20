@@ -120,6 +120,8 @@ var
   Serial: string;
   FirstRun: TDateTime;
 begin
+ // serial := GenerateSerial;
+ // WriteSerialToRegistry (SERIAL);
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
   ForceDirectories(DirSaves);
   FirstRun := GetOrCreateFirstRunDate;
@@ -130,8 +132,10 @@ begin
   else  begin
     IsDemo := True;
     // esempio: demo valida 30 giorni
-    if (FirstRun > 0) and (Now - FirstRun > 30) then
-    ShowMessage('Periodo di prova scaduto');
+    if (FirstRun > 0) and (Now - FirstRun > 30) then begin
+      ShowMessage(L(STR_TRIAL_EXPIRED));
+      Application.Terminate;
+    end;
   end;
 
   SelectedPrive := -1;

@@ -10,6 +10,7 @@ function GenerateSerial: string;
 function IsValidSerial(const S: string): Boolean;
 procedure GenerateSerialList(const FileName: string; Count: Integer);
 function ReadSerialFromRegistry: string;
+procedure WriteSerialToRegistry(const Serial: string);
 function GetOrCreateFirstRunDate: TDateTime;
 
 implementation
@@ -105,6 +106,21 @@ begin
     begin
       if Reg.ValueExists('Serial') then
         Result := Reg.ReadString('Serial');
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+procedure WriteSerialToRegistry(const Serial: string);
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create(KEY_WRITE);
+  try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\VVPrive', True) then
+    begin
+      Reg.WriteString('Serial', Serial);
     end;
   finally
     Reg.Free;
