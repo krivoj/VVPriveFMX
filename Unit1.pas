@@ -15,7 +15,6 @@ type
     TimerPrive: TTimer;
     Viewport3D1: TViewport3D;
     Camera1: TCamera;
-    procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure StartApplication;
     procedure TimerPriveTimer(Sender: TObject);
@@ -23,6 +22,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
+    procedure FormCreate(Sender: TObject);
   private
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
@@ -95,7 +95,6 @@ var
   MessageDialog: TMessageDialog;
   ALangDialog : TLangDialog;
   PriveSlot : Array[0..MAXGIRLSPRIVE-1] of TPoint3d;
-
 implementation
 
 {$R *.fmx}
@@ -103,17 +102,6 @@ implementation
 
 { TForm1 }
 
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-ALangDialog := TLangDialog.Create(
-    Self,
-    Self,
-    StartApplication   // ← QUI riparte tutto
-  );
-
-  ALangDialog.Show;
-  Exit; // 🔴 fondamentale
-end;
 procedure TForm1.StartApplication;
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
@@ -124,6 +112,72 @@ begin
 
   CheckLicense;   // 👈 QUI PARTE IL FLUSSO
 end;
+procedure TForm1.CheckLicense;
+var
+  Serial    : string;
+  FirstRun : TDateTime;
+begin
+  Serial := ReadSerialFromRegistry;
+
+  if IsValidSerial(Serial) then
+  begin
+    IsDemo := False;
+    Caption := 'VVPrive';
+    ContinueApplication;
+    Exit;
+  end;
+
+  FirstRun := GetOrCreateFirstRunDate;
+
+  if (FirstRun > 0) and (Now - FirstRun <= 60) then
+  begin
+    IsDemo := True;
+    Caption := 'VVPrive DEMO ' +
+      Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]);
+    ContinueApplication;
+    Exit;
+  end;
+
+  // ⛔ DEMO SCADUTA → chiedi licenza
+  AskForLicense;
+end;
+procedure TForm1.AskForLicense;
+begin
+  InputLicense.Show(
+    L(STR_TRIAL_EXPIRED) + ' .' + L(STR_TRIAL_INPUT_LICENSE),
+
+    // OK
+    procedure
+    begin
+      if IsValidSerial(Trim(InputLicense.FEdit.Text)) then
+      begin
+        WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
+        IsDemo := False;
+        Caption := 'VVPrive';
+        ContinueApplication;
+      end
+      else
+      begin
+        MessageDialog.Show(
+          L(STR_INVALID_LICENSE),
+          procedure
+          begin
+            CheckLicense; // 🔁 RIPROVA, NON TERMINA
+          end
+        );
+      end;
+    end,
+
+    // NO → L’UTENTE RINUNCIA
+    procedure
+    begin
+      Application.Terminate; // ❗ SOLO QUI
+    end
+  );
+
+  InputLicense.FEdit.SetFocus;
+end;
+
 procedure TForm1.ContinueApplication;
 var
   S: TPrivStorage;
@@ -156,7 +210,6 @@ begin
   PriveSlot[3].X := 0;
   PriveSlot[3].Y := -1.5;
 
-
   // Crea grid privè 6x4
   PrivGrid := TPrivGrid.Create(Viewport3D1,  5, 3, 3,4,0.05,0.05);
   PrivGrid.SetBasePosition(-8.5,-4);
@@ -164,6 +217,7 @@ begin
   PrivGrid.OnSwitchMouseDown := SwitchMouseDown;
   PrivGrid.OnAddMouseDown := PriveAddMouseDown;
   PrivGrid.OnStateChanged := OnStateChanged;
+  //    ShowMessage('ok');
 
   GirlGrid := TGirlGrid.Create ( ViewPort3d1, 2, 0.42,  0.02,0.02, PrivGrid );
   GirlGrid.LoadfromFiles;
@@ -171,6 +225,8 @@ begin
   GirlGrid.OnGirlGridImgDeleteMouseDown := GirlGridDeleteMouseDown;
   GirlGrid.OnGirlGridImgInfoMouseDown := GirlGridInfoMouseDown;
   GirlGrid.SetBasePosition(9,-2.5);
+
+
   TmpPriveGirls:=  TObjectList<TGirl>.Create(false);
 
   S:= TPrivStorage.Create(DirSaves + 'prive.j');
@@ -342,6 +398,17 @@ begin
 end;
 
 
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+ALangDialog := TLangDialog.Create(
+    Self,
+    Self,
+    StartApplication   // ← QUI riparte tutto
+  );
+
+  ALangDialog.Show;
+end;
+
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
   TmpPriveGirls.Free;
@@ -350,6 +417,7 @@ begin
   InputGirl.Free;
   MessageDialog.Free;
   PrivGrid.Free;
+  ALangDialog.Free;
   //GirlGrid.Free;
 end;
 
@@ -823,71 +891,6 @@ procedure TForm1.ExitMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
   Application.Terminate;
-end;
-procedure TForm1.CheckLicense;
-var
-  Serial    : string;
-  FirstRun : TDateTime;
-begin
-  Serial := ReadSerialFromRegistry;
-
-  if IsValidSerial(Serial) then
-  begin
-    IsDemo := False;
-    Caption := 'VVPrive';
-    ContinueApplication;
-    Exit;
-  end;
-
-  FirstRun := GetOrCreateFirstRunDate;
-
-  if (FirstRun > 0) and (Now - FirstRun <= 60) then
-  begin
-    IsDemo := True;
-    Caption := 'VVPrive DEMO ' +
-      Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]);
-    ContinueApplication;
-    Exit;
-  end;
-
-  // ⛔ DEMO SCADUTA → chiedi licenza
-  AskForLicense;
-end;
-procedure TForm1.AskForLicense;
-begin
-  InputLicense.Show(
-    L(STR_TRIAL_EXPIRED) + ' .' + L(STR_TRIAL_INPUT_LICENSE),
-
-    // OK
-    procedure
-    begin
-      if IsValidSerial(Trim(InputLicense.FEdit.Text)) then
-      begin
-        WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
-        IsDemo := False;
-        Caption := 'VVPrive';
-        ContinueApplication;
-      end
-      else
-      begin
-        MessageDialog.Show(
-          L(STR_INVALID_LICENSE),
-          procedure
-          begin
-            CheckLicense; // 🔁 RIPROVA, NON TERMINA
-          end
-        );
-      end;
-    end,
-
-    // NO → L’UTENTE RINUNCIA
-    procedure
-    begin
-      Application.Terminate; // ❗ SOLO QUI
-    end
-  );
-
-  InputLicense.FEdit.SetFocus;
 end;
 
 end.
