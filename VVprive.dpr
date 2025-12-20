@@ -22,7 +22,8 @@ uses
   u_Dialogs in 'u_Dialogs.pas',
   u_ActivitiesDialog in 'u_ActivitiesDialog.pas',
   u_PrivStorage in 'u_PrivStorage.pas',
-  u_lang in 'u_lang.pas';
+  u_lang in 'u_lang.pas',
+  u_Serial in 'u_Serial.pas';
 
 {$R *.res}
 

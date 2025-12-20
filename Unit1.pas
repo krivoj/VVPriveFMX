@@ -3,8 +3,8 @@
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,
-  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage, u_lang,
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,System.Win.Registry,
+  System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage, u_lang, u_serial,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources, FMX.Types3d, system.Math,
@@ -71,6 +71,7 @@ const MAXGIRLSPRIVE = 4;
 const MAXPRIVE = 15;
 var
   Form1: TForm1;
+  IsDemo: boolean;
   FormReady: Boolean;
   DirSaves: string;
   TmpPriveGirls: TObjectList<TGirl>;
@@ -116,9 +117,23 @@ var
   D: TPrivData;
   I: integer;
   APrive: TPlane;
+  Serial: string;
+  FirstRun: TDateTime;
 begin
-  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVprive\';
+  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
   ForceDirectories(DirSaves);
+  FirstRun := GetOrCreateFirstRunDate;
+
+  Serial := ReadSerialFromRegistry;
+  if IsValidSerial(Serial) then
+    IsDemo := False
+  else  begin
+    IsDemo := True;
+    // esempio: demo valida 30 giorni
+    if (FirstRun > 0) and (Now - FirstRun > 30) then
+    ShowMessage('Periodo di prova scaduto');
+  end;
+
   SelectedPrive := -1;
 
   FormReady := False;
