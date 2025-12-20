@@ -56,8 +56,8 @@ var
   STR_CLEAR_ALL_CONFIRM: TLangArray;
   STR_ACTIVITIES_RESET: TLangArray;
   STR_CANCEL, STR_OK_ADD, STR_OK_CONFIRM,STR_PRIVE: TLangArray;
+  STR_TRIAL_DAYS_LEFT, STR_TRIAL_EXPIRED, STR_TRIAL_INPUT_LICENSE, STR_INVALID_LICENSE: TLangArray;
   CurrentLang: TLang = lgIT;
-  STR_TRIAL_EXPIRED: TLangArray;
 // -----------------------------------------------------------------------------
 // STRINGS PER u_ActivitiesDialog
 // -----------------------------------------------------------------------------
@@ -230,7 +230,7 @@ initialization
 
   // ---------------------------------------------------------------------------
   // STR_CANNOT_REMOVE_ACTIVE
-  STR_CANNOT_REMOVE_ACTIVE[lgIT] := 'Non puoi rimuovere una ragzza se il privè è attivo.';
+  STR_CANNOT_REMOVE_ACTIVE[lgIT] := 'Non puoi rimuovere una ragazza se il privè è attivo.';
   STR_CANNOT_REMOVE_ACTIVE[lgEN] := 'You cannot remove a girl while the private room is active.';
   STR_CANNOT_REMOVE_ACTIVE[lgFR] := 'Impossible de retirer une fille si le privé est actif.';
   STR_CANNOT_REMOVE_ACTIVE[lgDE] := 'Du kannst kein Mädchen entfernen, wenn das Separee aktiv ist.';
@@ -371,6 +371,28 @@ initialization
   STR_TRIAL_EXPIRED[lgDE] := 'Testzeitraum abgelaufen';
   STR_TRIAL_EXPIRED[lgES] := 'Período de prueba caducado';
   STR_TRIAL_EXPIRED[lgRU] := 'Пробный период истёк';
+
+  STR_TRIAL_DAYS_LEFT[lgIT] := '%d giorni rimasti';
+  STR_TRIAL_DAYS_LEFT[lgEN] := '%d days left';
+  STR_TRIAL_DAYS_LEFT[lgFR] := '%d jours restants';
+  STR_TRIAL_DAYS_LEFT[lgDE] := '%d Tage verbleibend';
+  STR_TRIAL_DAYS_LEFT[lgES] := 'Quedan %d días';
+  STR_TRIAL_DAYS_LEFT[lgRU] := 'Осталось %d дней';
+
+  STR_TRIAL_INPUT_LICENSE[lgIT] := 'Inserisci la licenza';
+  STR_TRIAL_INPUT_LICENSE[lgEN] := 'Enter license';
+  STR_TRIAL_INPUT_LICENSE[lgFR] := 'Entrez la licence';
+  STR_TRIAL_INPUT_LICENSE[lgDE] := 'Lizenz eingeben';
+  STR_TRIAL_INPUT_LICENSE[lgES] := 'Introducir licencia';
+  STR_TRIAL_INPUT_LICENSE[lgRU] := 'Введите лицензию';
+
+  STR_INVALID_LICENSE[lgIT] := 'Licenza non valida';
+  STR_INVALID_LICENSE[lgEN] := 'Invalid license';
+  STR_INVALID_LICENSE[lgFR] := 'Licence non valide';
+  STR_INVALID_LICENSE[lgDE] := 'Ungültige Lizenz';
+  STR_INVALID_LICENSE[lgES] := 'Licencia no válida';
+  STR_INVALID_LICENSE[lgRU] := 'Недействительная лицензия';
+
 
 end.
 

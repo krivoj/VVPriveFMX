@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,System.Win.Registry,
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, Generics.defaults,System.Win.Registry,Dateutils,
   System.IOUtils, FMX.ListBox, u_PrivGrid, u_GirlGrid, u_girlStorage,u_Dialogs, u_ActivitiesDialog, u_PrivStorage, u_lang, u_serial,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
@@ -61,6 +61,9 @@ type
     function GetGirlsCountByPrive ( PriveTag: Integer ): Integer;
     function GetPriveFreeSlot ( PriveTag: Integer ): Integer;
 
+    procedure CheckLicense;
+    procedure AskForLicense;
+    procedure ContinueApplication;
 
   end;
   function CreateBlinkingText3D(const AOwner: TFmxObject; const TextStr: string ): TText3D;
@@ -87,7 +90,7 @@ var
   BorderMat: TColorMaterialSource;
 
   Confirm: TConfirmDialog;
-  InputGirl: TInputDialog;
+  InputGirl,InputLicense: TInputDialog;
   AActivitiesDialog: TActivitiesDialog;
   MessageDialog: TMessageDialog;
   ALangDialog : TLangDialog;
@@ -112,6 +115,16 @@ ALangDialog := TLangDialog.Create(
   Exit; // 🔴 fondamentale
 end;
 procedure TForm1.StartApplication;
+begin
+  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
+  ForceDirectories(DirSaves);
+
+  InputLicense := TInputDialog.Create(Self, Self);
+  MessageDialog := TMessageDialog.Create(Self, Self);
+
+  CheckLicense;   // 👈 QUI PARTE IL FLUSSO
+end;
+procedure TForm1.ContinueApplication;
 var
   S: TPrivStorage;
   D: TPrivData;
@@ -120,23 +133,8 @@ var
   Serial: string;
   FirstRun: TDateTime;
 begin
- // serial := GenerateSerial;
+  //serial := GenerateSerial;
  // WriteSerialToRegistry (SERIAL);
-  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
-  ForceDirectories(DirSaves);
-  FirstRun := GetOrCreateFirstRunDate;
-
-  Serial := ReadSerialFromRegistry;
-  if IsValidSerial(Serial) then
-    IsDemo := False
-  else  begin
-    IsDemo := True;
-    // esempio: demo valida 30 giorni
-    if (FirstRun > 0) and (Now - FirstRun > 30) then begin
-      ShowMessage(L(STR_TRIAL_EXPIRED));
-      Application.Terminate;
-    end;
-  end;
 
   SelectedPrive := -1;
 
@@ -144,7 +142,7 @@ begin
   Confirm := TConfirmDialog.Create(Self, Self);
   InputGirl := TInputDialog.Create(Self, Self);
   AActivitiesDialog := TActivitiesDialog.Create(Self,Self);
-  MessageDialog:= TMessageDialog.Create(self,self);
+  //MessageDialog:= TMessageDialog.Create(self,self);
 
   Viewport3D1.Align := TAlignLayout.Client;
   Viewport3D1.Visible := True;
@@ -348,6 +346,7 @@ procedure TForm1.FormDestroy(Sender: TObject);
 begin
   TmpPriveGirls.Free;
   Confirm.Free;
+  InputLicense.Free;
   InputGirl.Free;
   MessageDialog.Free;
   PrivGrid.Free;
@@ -824,6 +823,71 @@ procedure TForm1.ExitMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
   Application.Terminate;
+end;
+procedure TForm1.CheckLicense;
+var
+  Serial    : string;
+  FirstRun : TDateTime;
+begin
+  Serial := ReadSerialFromRegistry;
+
+  if IsValidSerial(Serial) then
+  begin
+    IsDemo := False;
+    Caption := 'VVPrive';
+    ContinueApplication;
+    Exit;
+  end;
+
+  FirstRun := GetOrCreateFirstRunDate;
+
+  if (FirstRun > 0) and (Now - FirstRun <= 60) then
+  begin
+    IsDemo := True;
+    Caption := 'VVPrive DEMO ' +
+      Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]);
+    ContinueApplication;
+    Exit;
+  end;
+
+  // ⛔ DEMO SCADUTA → chiedi licenza
+  AskForLicense;
+end;
+procedure TForm1.AskForLicense;
+begin
+  InputLicense.Show(
+    L(STR_TRIAL_EXPIRED) + ' .' + L(STR_TRIAL_INPUT_LICENSE),
+
+    // OK
+    procedure
+    begin
+      if IsValidSerial(Trim(InputLicense.FEdit.Text)) then
+      begin
+        WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
+        IsDemo := False;
+        Caption := 'VVPrive';
+        ContinueApplication;
+      end
+      else
+      begin
+        MessageDialog.Show(
+          L(STR_INVALID_LICENSE),
+          procedure
+          begin
+            CheckLicense; // 🔁 RIPROVA, NON TERMINA
+          end
+        );
+      end;
+    end,
+
+    // NO → L’UTENTE RINUNCIA
+    procedure
+    begin
+      Application.Terminate; // ❗ SOLO QUI
+    end
+  );
+
+  InputLicense.FEdit.SetFocus;
 end;
 
 end.
