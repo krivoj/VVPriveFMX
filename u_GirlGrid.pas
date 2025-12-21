@@ -188,7 +188,7 @@ begin
         // LA RAGAZZA E' IN PRIVE
         APrivPlane := FPrivGrid.GetPriveByTag(FGirls[i].Prive);
         Plane.Parent := APrivPlane;
-        Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+        //Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
         Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
         Plane.Position.Z := 0.3;
       end;
@@ -404,8 +404,9 @@ begin
         if Assigned(APrivPlane) then
         begin
           Plane.Parent := APrivPlane;
-          Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+          //Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
           Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
+          Plane.Position.Z := 0.3 ;
         end;
       end;
 

@@ -56,7 +56,7 @@ var
   STR_CLEAR_ALL_CONFIRM: TLangArray;
   STR_ACTIVITIES_RESET: TLangArray;
   STR_CANCEL, STR_OK_ADD, STR_OK_CONFIRM,STR_PRIVE: TLangArray;
-  STR_TRIAL_DAYS_LEFT, STR_TRIAL_EXPIRED, STR_TRIAL_INPUT_LICENSE, STR_INVALID_LICENSE: TLangArray;
+  STR_TRIAL_DAYS_LEFT, STR_TRIAL_EXPIRED, STR_TRIAL_INPUT_LICENSE, STR_INVALID_LICENSE, STR_LICENSE: TLangArray;
   CurrentLang: TLang = lgIT;
 // -----------------------------------------------------------------------------
 // STRINGS PER u_ActivitiesDialog
@@ -393,6 +393,12 @@ initialization
   STR_INVALID_LICENSE[lgES] := 'Licencia no válida';
   STR_INVALID_LICENSE[lgRU] := 'Недействительная лицензия';
 
+  STR_LICENSE[lgIT] := 'Licenza';
+  STR_LICENSE[lgEN] := 'License';
+  STR_LICENSE[lgFR] := 'Licence';
+  STR_LICENSE[lgDE] := 'Lizenz';
+  STR_LICENSE[lgES] := 'Licencia';
+  STR_LICENSE[lgRU] := 'Лицензия';
 
 end.
 

@@ -8,13 +8,15 @@ uses
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.edit, FMX.ani,
   FMX.Viewport3D, System.Math.Vectors, FMX.Controls3D , FMX.Objects3D, FMX.SpinBox,
   FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects, FMX.MaterialSources, FMX.Types3d, system.Math,
-  FMX.Types, System.Generics.Collections,  FMX.Effects;
+  FMX.Types, System.Generics.Collections,  FMX.Effects, FMX.Menus;
 
 type
   TForm1 = class(TForm)
     TimerPrive: TTimer;
     Viewport3D1: TViewport3D;
     Camera1: TCamera;
+    MainMenu1: TMainMenu;
+    MenuItem1: TMenuItem;
     procedure FormDestroy(Sender: TObject);
     procedure StartApplication;
     procedure TimerPriveTimer(Sender: TObject);
@@ -23,6 +25,7 @@ type
     procedure Viewport3D1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure FormCreate(Sender: TObject);
+    procedure MenuItem1Click(Sender: TObject);
   private
     GirlGrid: TGirlGrid;
     PrivGrid: TPrivGrid;
@@ -86,8 +89,6 @@ var
   TxtClearAllActivities,TxtAddGirl,TxtPrintAll, TxtExit : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
 
-  MBorder: TPlane;
-  BorderMat: TColorMaterialSource;
 
   Confirm: TConfirmDialog;
   InputGirl,InputLicense: TInputDialog;
@@ -106,6 +107,7 @@ procedure TForm1.StartApplication;
 begin
   DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
   ForceDirectories(DirSaves);
+  TMenuItem(MainMenu1.Items[0]).Text := L(STR_LICENSE);
 
   InputLicense := TInputDialog.Create(Self, Self);
   MessageDialog := TMessageDialog.Create(Self, Self);
@@ -378,20 +380,6 @@ begin
   TxtExit.RotationAngle.X := -180;
   TxtExit.HitTest := false;
 
-
-  BorderMat := TColorMaterialSource.Create(Viewport3D1);
-  BorderMat.Color := TAlphaColorRec.gray;   // colore bordo
-
-  MBorder := TPlane.Create(Viewport3D1);
-  MBorder.Parent := Viewport3D1;
-  MBorder.Width := PlaneAddGirl.Width + 0.08;    // bordo esterno
-  MBorder.Height := PlaneAddGirl.Height + 0.08;
-  MBorder.Position.X := PlaneAddGirl.Position.X;
-  MBorder.Position.Y := PlaneAddGirl.Position.Y;
-  MBorder.Position.Z := PlaneAddGirl.Position.Z - 0.02; // dietro al pulsante
-  MBorder.MaterialSource := BorderMat;
-  MBorder.HitTest := False; // non deve prendere i click
-
   SetupCameraTopView;
   TimerPrive.Enabled := true;
 
@@ -618,6 +606,50 @@ begin
   end;
 
 end;
+procedure TForm1.MenuItem1Click(Sender: TObject);
+var
+  Serial    : string;
+begin
+  Serial := ReadSerialFromRegistry;
+  if IsValidSerial(Serial) then
+    MessageDialog.Show(Serial)
+  else begin
+  InputLicense.Show(
+    L(STR_TRIAL_INPUT_LICENSE),
+
+    // OK
+    procedure
+    begin
+      if IsValidSerial(Trim(InputLicense.FEdit.Text)) then
+      begin
+        WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
+        IsDemo := False;
+        Caption := 'VVPrive';
+      end
+      else
+      begin
+        MessageDialog.Show(
+          L(STR_INVALID_LICENSE),
+          procedure
+          begin
+
+          end
+        );
+      end;
+    end,
+
+    // NO → L’UTENTE RINUNCIA
+    procedure
+    begin
+    end
+  );
+
+  InputLicense.FEdit.SetFocus;
+
+  end;
+
+end;
+
 procedure TForm1.GirlGridInfoMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; Tag: string);
 begin
