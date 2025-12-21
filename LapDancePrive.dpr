@@ -1,4 +1,4 @@
-program VVprive;
+program LapDancePrive;
 
 {$R 'images.res' 'images.rc'}
 

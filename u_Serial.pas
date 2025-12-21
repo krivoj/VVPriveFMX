@@ -102,7 +102,7 @@ begin
   Reg := TRegistry.Create(KEY_READ);
   try
     Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\VVPrive', False) then
+    if Reg.OpenKey('\Software\LapDancePrive', False) then
     begin
       if Reg.ValueExists('Serial') then
         Result := Reg.ReadString('Serial');
@@ -118,7 +118,7 @@ begin
   Reg := TRegistry.Create(KEY_WRITE);
   try
     Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\VVPrive', True) then
+    if Reg.OpenKey('\Software\LapDance Prive', True) then
     begin
       Reg.WriteString('Serial', Serial);
     end;
@@ -135,7 +135,7 @@ begin
   try
     Reg.RootKey := HKEY_CURRENT_USER;
 
-    if Reg.OpenKey('\Software\VVPrive', True) then
+    if Reg.OpenKey('\Software\LapDance Prive', True) then
     begin
       if Reg.ValueExists('FirstRun') then
       begin

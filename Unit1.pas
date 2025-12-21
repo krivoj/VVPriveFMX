@@ -105,7 +105,7 @@ implementation
 
 procedure TForm1.StartApplication;
 begin
-  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\VVPrive\';
+  DirSaves := GetEnvironmentVariable('LOCALAPPDATA') + '\LapDance Prive\';
   ForceDirectories(DirSaves);
   TMenuItem(MainMenu1.Items[0]).Text := L(STR_LICENSE);
 
@@ -124,7 +124,7 @@ begin
   if IsValidSerial(Serial) then
   begin
     IsDemo := False;
-    Caption := 'VVPrive';
+    Caption := 'LapDance Prive';
     ContinueApplication;
     Exit;
   end;
@@ -134,7 +134,7 @@ begin
   if (FirstRun > 0) and (Now - FirstRun <= 60) then
   begin
     IsDemo := True;
-    Caption := 'VVPrive DEMO ' +
+    Caption := 'LapDance Prive DEMO ' +
       Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]);
     ContinueApplication;
     Exit;
@@ -155,7 +155,7 @@ begin
       begin
         WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
         IsDemo := False;
-        Caption := 'VVPrive';
+        Caption := 'LapDance Prive';
         ContinueApplication;
       end
       else
@@ -624,7 +624,7 @@ begin
       begin
         WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
         IsDemo := False;
-        Caption := 'VVPrive';
+        Caption := 'LapDance Prive';
       end
       else
       begin
