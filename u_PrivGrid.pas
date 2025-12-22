@@ -536,6 +536,9 @@ begin
     for X := 0 to FCols - 1 do
     begin
       Data := TPrivStatus(FTiles[X,Y].TagObject);
+      if (Data = nil) then
+        Continue;
+
       if Data.State <> tsOff then begin
         Remaining := Data.EndTime - NowT;
         Sec := Round(Remaining * 86400);

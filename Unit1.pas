@@ -500,8 +500,18 @@ begin
         begin
         Confirm.Show(L(STR_PRIVE_SHORT_CONFIRM) + sLineBreak,
           procedure
+          var
+          I: Integer;
           begin
-            //
+         {  per tutte le girl in quel prive' LogActivity }
+            for I := 0 to GirlGrid.FGirls.Count -1 do
+              begin
+                if GirlGrid.FGirls[I].Prive = PriveTag then begin
+                  AGirlStorage:= TGirlStorage.Create;
+                  AGirlStorage.LogActivity(GirlGrid.FGirls[I].Name);   // CHIUDE L’ULTIMA ATTIVITÀ
+                  AGirlStorage.Free;
+                end;
+              end;
           end,
           procedure
           begin
@@ -509,9 +519,9 @@ begin
             Exit;
           end
         );
-        end;
-         {  per tutte le girl in quel prive' LogActivity }
-        for I := 0 to GirlGrid.FGirls.Count -1 do
+        end
+        else begin
+          for I := 0 to GirlGrid.FGirls.Count -1 do
           begin
             if GirlGrid.FGirls[I].Prive = PriveTag then begin
               AGirlStorage:= TGirlStorage.Create;
@@ -519,6 +529,8 @@ begin
               AGirlStorage.Free;
             end;
           end;
+
+        end;
       end;
     end;
     CancelSelectedPrive;
