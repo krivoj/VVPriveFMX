@@ -18,7 +18,7 @@ implementation
 const
   WEIGHTS: array[0..10] of Integer =
     (3, 7, 1, 9, 3, 7, 1, 9, 3, 7, 1);
-
+  PRODUCT_SALT = 4; // <-- CAMBIA QUESTO PER OGNI SOFTWARE
 function CalcChecksum(const Digits: TArray<Integer>): Integer;
 var
   I, Sum: Integer;
@@ -27,7 +27,7 @@ begin
   for I := 0 to High(WEIGHTS) do
     Sum := Sum + Digits[I] * WEIGHTS[I];
 
-  Result := Sum mod 10;
+  Result := (Sum + PRODUCT_SALT) mod 10;
 end;
 
 function RandomDigit: Integer;
