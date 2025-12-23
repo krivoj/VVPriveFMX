@@ -12,7 +12,7 @@ procedure GenerateSerialList(const FileName: string; Count: Integer);
 function ReadSerialFromRegistry: string;
 procedure WriteSerialToRegistry(const Serial: string);
 function GetOrCreateFirstRunDate: TDateTime;
-
+function GetFileVersion(const FileName: string): string;
 implementation
 
 const
@@ -152,6 +152,32 @@ begin
       Result := 0;
   finally
     Reg.Free;
+  end;
+end;
+function GetFileVersion(const FileName: string): string;
+var
+  Size, Handle: DWORD;
+  Buffer: Pointer;
+  FixedFileInfo: PVSFixedFileInfo;
+  Len: UINT;
+begin
+  Result := '0.0.0.0';
+  Size := GetFileVersionInfoSize(PChar(FileName), Handle);
+  if Size = 0 then Exit;
+
+  GetMem(Buffer, Size);
+  try
+    if GetFileVersionInfo(PChar(FileName), Handle, Size, Buffer) then
+      if VerQueryValue(Buffer, '\', Pointer(FixedFileInfo), Len) then
+        Result := Format('%d.%d.%d.%d',
+          [
+            HiWord(FixedFileInfo^.dwFileVersionMS),
+            LoWord(FixedFileInfo^.dwFileVersionMS),
+            HiWord(FixedFileInfo^.dwFileVersionLS),
+            LoWord(FixedFileInfo^.dwFileVersionLS)
+          ]);
+  finally
+    FreeMem(Buffer);
   end;
 end;
 

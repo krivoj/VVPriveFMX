@@ -31,7 +31,6 @@ type
     FTiles: array of array of TPlane;
     MatText: TColorMaterialSource;
 
-    procedure CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
     procedure InternalMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
     procedure InternalImgDeleteMouseDown(Sender: TObject; Button: TMouseButton;
@@ -39,7 +38,6 @@ type
     procedure InternalImgInfoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 
-    function GetTileByGirlName(Text: String): TPlane;
   public
     FRoot: TDummy;
     Mat, MatHighLight, MatDelete, MatDelete2, MatInfo: TTextureMaterialSource;
@@ -153,7 +151,6 @@ var
   Plane: TPlane;
   Txt: TText3D;
   PlaneDelete, PlaneInfo: TPlane;
-  RS: TResourceStream;
   APrivPlane: TPlane;
 begin
 
@@ -260,24 +257,6 @@ begin
     end;
 end;
 
-procedure TGirlGrid.CreateRoundedBitmap(ABitmap: TBitmap; AColor: TAlphaColor);
-var
-  R: TRectF;
-begin
-  ABitmap.SetSize(128,128);
-  ABitmap.Clear(0);
-  R := RectF(4,4,124,124);
-
-  ABitmap.Canvas.BeginScene;
-  try
-    ABitmap.Canvas.Fill.Kind := TBrushKind.Solid;
-    ABitmap.Canvas.Fill.Color := AColor;
-    ABitmap.Canvas.FillRect(R,20,20,AllCorners,1.0);
-  finally
-    ABitmap.Canvas.EndScene;
-  end;
-end;
-
 procedure TGirlGrid.InternalMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single; RayPos, RayDir: TVector3D);
 begin
@@ -358,19 +337,6 @@ begin
       Exit(FGirls[i]);
 
   Result := Default(TGirl);
-end;
-function TGirlGrid.GetTileByGirlName(Text: String): TPlane;
-var
-  X, Y: Integer;
-begin
-  Result := nil;
-  for Y := 0 to FRows - 1 do
-    for X := 0 to FCols - 1 do
-      if Assigned(FTiles[X,Y]) and (FTiles[X,Y].TagString = Text) then
-      begin
-        Result := FTiles[X,Y];
-        Exit;
-      end;
 end;
 
 procedure TGirlGrid.UpdateGrid;

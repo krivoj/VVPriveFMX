@@ -124,7 +124,7 @@ begin
   if IsValidSerial(Serial) then
   begin
     IsDemo := False;
-    Caption := 'LapDance Prive';
+    Caption := 'LapDance Prive v.' + GetFileVersion(ParamStr(0));
     ContinueApplication;
     Exit;
   end;
@@ -134,8 +134,8 @@ begin
   if (FirstRun > 0) and (Now - FirstRun <= 60) then
   begin
     IsDemo := True;
-    Caption := 'LapDance Prive DEMO ' +
-      Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]);
+    Caption := 'LapDance Prive DEMO v.' + GetFileVersion(ParamStr(0)) + ' ('+
+      Format(L(STR_TRIAL_DAYS_LEFT), [60 - DaysBetween(Now, FirstRun)]) + ')';
     ContinueApplication;
     Exit;
   end;
@@ -155,7 +155,7 @@ begin
       begin
         WriteSerialToRegistry(Trim(InputLicense.FEdit.Text));
         IsDemo := False;
-        Caption := 'LapDance Prive';
+        Caption := 'LapDance Prive v.' + GetFileVersion(ParamStr(0));
         ContinueApplication;
       end
       else
