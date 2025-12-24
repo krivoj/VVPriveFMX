@@ -177,7 +177,7 @@ begin
     end
   );
 
-  InputLicense.FEdit.SetFocus;
+
 end;
 
 procedure TForm1.ContinueApplication;
@@ -644,7 +644,7 @@ begin
           L(STR_INVALID_LICENSE),
           procedure
           begin
-
+            CheckLicense; // 🔁 RIPROVA, NON TERMINA
           end
         );
       end;
@@ -653,10 +653,10 @@ begin
     // NO → L’UTENTE RINUNCIA
     procedure
     begin
+
     end
   );
 
-  InputLicense.FEdit.SetFocus;
 
   end;
 
@@ -710,7 +710,7 @@ begin
         // ora è sicuro modificare FGirls o ricreare le tile
             GirlGrid.AddGirl(Name);
           end);
-          InputGirl.FEdit.Text := '';
+
         end
         else
         begin
@@ -722,7 +722,6 @@ begin
         // NO
       end
     ); // <- chiude la chiamata a InputGirl.Show
-      InputGirl.FEdit.setfocus;
 
   end
   else
@@ -865,7 +864,7 @@ begin
   Txt.VertTextAlign := TTextAlign.Center;
   Txt.MaterialSource := MatMenuText;
   Txt.Stretch := True;
-  Txt.Depth := 0.15;
+  Txt.Depth := 0.0;
   Txt.Scale.X := 0.04;
   Txt.Scale.Y := 0.04;
   Txt.Position.X := 1;

@@ -329,6 +329,7 @@ begin
   FEdit.Text := '';
   FRoot.Visible := True;
   FRoot.Opacity := 1;
+  FEdit.SetFocus;
 end;
 
 procedure TInputDialog.Hide;
