@@ -168,7 +168,7 @@ begin
       Txt.Height := Plane.Height;
       Txt.Position.X := (Plane.Width / 2 ) - (Txt.Width / 2);
       Txt.Position.Y := (Plane.Height / 2) - (Txt.Height / 2);
-      Txt.Position.Z := 0.05;
+      Txt.Position.Z := 0.02;
       Txt.RotationAngle.X := -180;
       Txt.HitTest := False;
 

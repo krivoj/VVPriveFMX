@@ -84,7 +84,7 @@ var
   SelectedPrive: Integer;
   TxtSelGirl: TText3d;
 
-  MatMenu : TColorMaterialSource;
+  MatMenu, MatMenuButton : TColorMaterialSource;
   PlaneClearAllActivities,PlaneAddGirl,PlanePrintAll,PlaneExit: TPlane;
   TxtClearAllActivities,TxtAddGirl,TxtPrintAll, TxtExit : TText3D;
   MatMenuText, MatMenuText2 : TColorMaterialSource;
@@ -188,8 +188,9 @@ var
   APrive: TPlane;
   Serial: string;
   FirstRun: TDateTime;
+  PlaneMenuBG: TPlane;
 begin
-  //serial := GenerateSerial;
+ // serial := GenerateSerial;
  // WriteSerialToRegistry (SERIAL);
 
   SelectedPrive := -1;
@@ -251,16 +252,29 @@ begin
   MatMenu := TColorMaterialSource.Create(Viewport3D1);
   MatMenu.Color := TAlphaColorRec.Black;
 
+  MatMenuButton := TColorMaterialSource.Create(Viewport3D1);
+  MatMenuButton.Color := $FF2B2B2B;        // grigio scuro elegante
 //  TxtSelGirl := CreateBlinkingText3D(Viewport3D1, 'Seleziona una ragazza', Vector3D(8,-3.5,0), 12);
   TxtSelGirl := CreateBlinkingText3D(Viewport3D1, L(STR_SELECT_GIRL) );
 
+  PlaneMenuBG := TPlane.Create(Viewport3D1);
+  PlaneMenuBG.Parent := Viewport3D1;
+  PlaneMenuBG.Width := 5.0;      // grande abbastanza per 4 bottoni
+  PlaneMenuBG.Height := 1.30;
+  PlaneMenuBG.Position.X := 7.75;
+  PlaneMenuBG.Position.Y := -5.36;
+  PlaneMenuBG.Position.Z := -0.02; // leggermente dietro ai bottoni
+  PlaneMenuBG.MaterialSource := MatMenu;
+  PlaneMenuBG.HitTest := False;   // non intercetta click
+
   PlaneClearAllActivities := TPlane.Create(Viewport3D1);
-  PlaneClearAllActivities.Parent := Viewport3D1;
+  PlaneClearAllActivities.Parent := PlaneMenuBG;
+  PlaneClearAllActivities.Position.X := -1.25;
+  PlaneClearAllActivities.Position.Y := 0.30;
+
   PlaneClearAllActivities.Width := 2.2;
   PlaneClearAllActivities.Height := 0.5;
-  PlaneClearAllActivities.MaterialSource := MatMenu;
-  PlaneClearAllActivities.Position.X := 6.5;
-  PlaneClearAllActivities.Position.Y := -5;
+  PlaneClearAllActivities.MaterialSource := MatMenuButton;
   PlaneClearAllActivities.HitTest := True;
   PlaneClearAllActivities.OnMouseDown := ClearAllActivitiesMouseDown;
   PlaneClearAllActivities.Cursor := CrHandPoint;
@@ -286,12 +300,12 @@ begin
   TxtClearAllActivities.HitTest := false;
 
   PlaneAddGirl := TPlane.Create(Viewport3D1);
-  PlaneAddGirl.Parent := Viewport3D1;
+  PlaneAddGirl.Parent := PlaneMenuBG;
+  PlaneAddGirl.Position.X := 1.25;
+  PlaneAddGirl.Position.Y := 0.30;
   PlaneAddGirl.Width := 2.2;
   PlaneAddGirl.Height := 0.5;
-  PlaneAddGirl.MaterialSource := MatMenu;
-  PlaneAddGirl.Position.X := 9;
-  PlaneAddGirl.Position.Y := -5;
+  PlaneAddGirl.MaterialSource := MatMenuButton;
   PlaneAddGirl.HitTest := True;
   PlaneAddGirl.OnMouseDown := AddGirlMouseDown;
   PlaneAddGirl.Cursor := CrHandPoint;
@@ -318,12 +332,12 @@ begin
 
 
   PlanePrintAll := TPlane.Create(Viewport3D1);
-  PlanePrintAll.Parent := Viewport3D1;
+  PlanePrintAll.Parent := PlaneMenuBG;
+  PlanePrintAll.Position.X := -1.25;
+  PlanePrintAll.Position.Y := -0.30;
   PlanePrintAll.Width := 2.2;
   PlanePrintAll.Height := 0.5;
-  PlanePrintAll.MaterialSource := MatMenu;
-  PlanePrintAll.Position.X := 6.5;
-  PlanePrintAll.Position.Y := -5.65;
+  PlanePrintAll.MaterialSource := MatMenuButton;
   PlanePrintAll.HitTest := True;
   PlanePrintAll.OnMouseDown := PrintAllMouseDown;
   PlanePrintAll.Cursor := CrHandPoint;
@@ -350,12 +364,12 @@ begin
 
 
   PlaneExit := TPlane.Create(Viewport3D1);
-  PlaneExit.Parent := Viewport3D1;
+  PlaneExit.Parent := PlaneMenuBG;
+  PlaneExit.Position.X := 1.25;
+  PlaneExit.Position.Y := -0.30;
   PlaneExit.Width := 2.2;
   PlaneExit.Height := 0.5;
-  PlaneExit.MaterialSource := MatMenu;
-  PlaneExit.Position.X := 9;
-  PlaneExit.Position.Y := -5.65;
+  PlaneExit.MaterialSource := MatMenuButton;
   PlaneExit.HitTest := True;
   PlaneExit.OnMouseDown := ExitMouseDown;
   PlaneExit.Cursor := CrHandPoint;
@@ -864,12 +878,12 @@ begin
   Txt.VertTextAlign := TTextAlign.Center;
   Txt.MaterialSource := MatMenuText;
   Txt.Stretch := True;
-  Txt.Depth := 0.0;
+  Txt.Depth := 0.1;
   Txt.Scale.X := 0.04;
   Txt.Scale.Y := 0.04;
   Txt.Position.X := 1;
   Txt.Position.Y := 0.85;
-  Txt.Position.Z := 0.03;
+  Txt.Position.Z := 0.06;
   Txt.RotationAngle.X := 0;
   Txt.RotationAngle.Y := 0;
   Txt.RotationAngle.Z := 0;
