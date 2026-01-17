@@ -39,6 +39,7 @@
 #Linux64/
 
 # Delphi compiler-generated binaries (safe to delete)
+*.rar
 *.exe
 *.dll
 *.bpl
