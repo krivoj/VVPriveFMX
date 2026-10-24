@@ -142,6 +142,7 @@ begin
   MatHighLight.Free;
   MatText.Free;
   FRoot.DisposeOf;
+  FGirls.free;
   inherited;
 end;
 
@@ -185,7 +186,7 @@ begin
         // LA RAGAZZA E' IN PRIVE
         APrivPlane := FPrivGrid.GetPriveByTag(FGirls[i].Prive);
         Plane.Parent := APrivPlane;
-        //Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+        Plane.Position.X := PriveSlot[FGirls[i].Slot].X;
         Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
         Plane.Position.Z := 0.3;
       end;
@@ -363,6 +364,7 @@ begin
         Plane.Parent := FRoot;
         Plane.Position.X := -((FCols - 1) - col) * (FTileWidth + FPadX);
         Plane.Position.Y := (FRows - 1 - row) * (FTileHeight + FPadY);
+        Plane.Position.Z := 0;
       end
       else
       begin
@@ -370,7 +372,7 @@ begin
         if Assigned(APrivPlane) then
         begin
           Plane.Parent := APrivPlane;
-          //Plane.Position.X := PriveSlot[FGirls[i].Slot].X ;
+          Plane.Position.X := PriveSlot[FGirls[i].Slot].X;
           Plane.Position.Y := PriveSlot[FGirls[i].Slot].Y ;
           Plane.Position.Z := 0.3 ;
         end;
@@ -422,6 +424,7 @@ begin
         AGirl.Slot :=  GirlData.Slot;
         AGirl.Start := GirlData.Start;
         FGirls.Add(AGirl);
+        AGirlStorage.free;
       end;
   FGirls.Sort(TComparer<TGirl>.Construct(
     function(const A, B: TGirl): Integer
@@ -430,6 +433,7 @@ begin
     end));
 
   ReBuildGrid;
+
 end;
 end.
 

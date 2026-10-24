@@ -33,6 +33,7 @@ type
     FViewport: TViewport3D;
     FRoot: TDummy;
     FTiles: array of array of TPlane;
+    FStatuses: TObjectList<TPrivStatus>;
     MatOff, MatOn, MatAlarm: TTextureMaterialSource;
 
     MatText: TColorMaterialSource;
@@ -85,6 +86,7 @@ var
   RS : TResourceStream;
 begin
   inherited Create;
+  FStatuses := TObjectList<TPrivStatus>.Create(True);
   FViewport := AParent;
   FCols := Cols;
   FRows := Rows;
@@ -135,6 +137,7 @@ begin
     for X := 0 to FCols - 1 do
     begin
       Data := TPrivStatus.Create;
+      FStatuses.Add(Data);
       Data.Number := TotCells;
       Data.State := tsOff;
 
@@ -243,9 +246,14 @@ destructor TPrivGrid.Destroy;
 var
   X, Y: Integer;
 begin
-  for Y := 0 to FRows - 1 do
-    for X := 0 to FCols - 1 do
-      FTiles[X, Y].DisposeOf;
+  for X := 0 to Length(FTiles) - 1 do
+    for Y := 0 to Length(FTiles[X]) - 1 do
+      if Assigned(FTiles[X, Y]) then
+        FTiles[X, Y].DisposeOf;
+
+  // TagObject is a shared reference, not an owner: each status is freed once,
+  // after its tile and the switch/add controls have been destroyed.
+  FStatuses.Free;
 
   SpinDialog.Free;
   MessageDialog.Free;

@@ -417,10 +417,11 @@ begin
   Confirm.Free;
   InputLicense.Free;
   InputGirl.Free;
+  FreeAndNil(AActivitiesDialog);
   MessageDialog.Free;
   PrivGrid.Free;
   ALangDialog.Free;
-  //GirlGrid.Free;
+  GirlGrid.Free;
 end;
 
 procedure TForm1.TimerPriveTimer(Sender: TObject);
@@ -436,7 +437,7 @@ end;
 
 procedure TForm1.FormResize(Sender: TObject);
 begin
-  if FormReady then
+  if Assigned(Camera1) and Assigned(Viewport3D1) then
     SetupCameraTopView;
 end;
 
@@ -447,11 +448,30 @@ begin
 end;
 
 procedure TForm1.SetupCameraTopView;
+const
+  // Bounds of the complete dashboard in world coordinates, including padding.
+  SceneLeft = -10.5;
+  SceneRight = 10.5;
+  SceneBottom = -6.25;
+  SceneTop = 6.5;
+  // Interactive planes extend towards the camera as far as Z = 0.4.
+  FrontDepth = 0.5;
+var
+  Aspect, HalfHeight, HalfWidth, Distance: Single;
 begin
+  if (Viewport3D1.Width <= 0) or (Viewport3D1.Height <= 0) then
+    Exit;
+  Aspect := Viewport3D1.Width / Viewport3D1.Height;
+  HalfWidth := (SceneRight - SceneLeft) / 2;
+  HalfHeight := (SceneTop - SceneBottom) / 2;
+  // FMX uses a vertical field of view. Fit BOTH dimensions, also on 4:3,
+  // portrait and ultrawide screens. The same camera handles FMX ray picking.
+  Distance := Max(HalfHeight, HalfWidth / Aspect) /
+    Tan(DegToRad(Camera1.AngleOfView / 2)) + FrontDepth;
   Camera1.Parent := Viewport3D1;
-  Camera1.Position.X := 0;
-  Camera1.Position.Y := 0;
-  Camera1.Position.Z := 15;
+  Camera1.Position.X := (SceneLeft + SceneRight) / 2;
+  Camera1.Position.Y := (SceneBottom + SceneTop) / 2;
+  Camera1.Position.Z := Distance;
   Camera1.RotationAngle.X := -180;
   Camera1.RotationAngle.Y := 0;
   Camera1.RotationAngle.Z := 0;

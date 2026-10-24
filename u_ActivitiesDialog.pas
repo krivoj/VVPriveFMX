@@ -8,7 +8,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.ListBox, FMX.StdCtrls, System.UITypes, FMX.Memo, u_lang,
   FMX.Objects, FMX.Graphics,
   FMX.Printer, FMX.Dialogs,                // << aggiunte per la stampa
-  u_GirlStorage, System.IOUtils, System.DateUtils;
+  u_GirlStorage, System.IOUtils, System.DateUtils, u_ResponsiveLayout;
 
 type
   TPrintPreviewDialog = class
@@ -144,7 +144,7 @@ begin
   FItems := TList<TActivityView>.Create;
   FStorage := TGirlStorage.Create;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.HitTest := True;
@@ -160,6 +160,7 @@ begin
   FPanel.Align := TAlignLayout.Center;
   FPanel.Width := 800;
   FPanel.Height := 800;
+  TResponsiveDialogRoot(FRoot).FitPanel(FPanel);
   FPanel.Fill.Color := $FF202020;
   FPanel.XRadius := 18;
   FPanel.YRadius := 18;
@@ -394,7 +395,7 @@ var
 begin
   FOwner := AOwner;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -410,6 +411,7 @@ begin
   FPanel.Align := TAlignLayout.Center;
   FPanel.Width := 700;
   FPanel.Height := 700;
+  TResponsiveDialogRoot(FRoot).FitPanel(FPanel);
   FPanel.XRadius := 16;
   FPanel.YRadius := 16;
   FPanel.Fill.Color := $FF202020;

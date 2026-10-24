@@ -4,7 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, FMX.Types, FMX.Controls, FMX.Objects, FMX.Layouts, System.Types, System.UITypes, FMX.Text, FMX.Types3D, System.Math.Vectors,u_lang,
-  FMX.StdCtrls, FMX.Graphics, FMX.Edit, FMX.Objects3D,FMX.MaterialSources;
+  FMX.StdCtrls, FMX.Graphics, FMX.Edit, FMX.Objects3D, FMX.MaterialSources,
+  u_ResponsiveLayout;
 
 type
   TConfirmDialog = class
@@ -111,7 +112,7 @@ var
 begin
   FOwner := AOwner;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -129,6 +130,7 @@ begin
   box.Align := TAlignLayout.Center;
   box.Width := 800;
   box.Height := 300;
+  TResponsiveDialogRoot(FRoot).FitPanel(box);
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
@@ -157,7 +159,7 @@ begin
   cancel := TButton.Create(footer);
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
-  cancel.Width := 380;
+  cancel.Width := 340;
   cancel.Text :=  L(STR_NO);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickNo;
@@ -168,7 +170,7 @@ begin
   ok := TButton.Create(footer);
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
-  ok.Width := 380;
+  ok.Width := 340;
   ok.Text :=  L(STR_YES);
   ok.Margins.Left := 40;
   ok.OnClick := ClickYes;
@@ -247,7 +249,7 @@ var
 begin
   FOwner := AOwner;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -265,6 +267,7 @@ begin
   box.Align := TAlignLayout.Center;
   box.Width := 800;
   box.Height := 300;
+  TResponsiveDialogRoot(FRoot).FitPanel(box);
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
@@ -287,9 +290,9 @@ begin
   FEdit := TEdit.Create(box);
   FEdit.Parent := box;
   FEdit.Align := TAlignLayout.Client;
-  FEdit.Font.Size := 22;
-  FEdit.Scale.X := 10;
-  FEdit.Scale.Y := 7;
+  // Keep the large input font when the FMX style is applied on first show.
+  FEdit.StyledSettings := FEdit.StyledSettings - [TStyledSetting.Size];
+  FEdit.Font.Size := 64;
 
   footer := TLayout.Create(box);
   footer.Parent := box;
@@ -301,7 +304,7 @@ begin
   cancel := TButton.Create(footer);
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
-  cancel.Width := 380;
+  cancel.Width := 340;
   cancel.Text := L(STR_CANCEL);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickCancel;
@@ -312,7 +315,7 @@ begin
   ok := TButton.Create(footer);
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
-  ok.Width := 380;
+  ok.Width := 340;
   ok.Text := L(STR_OK_ADD);
   ok.Margins.Left := 40;
   ok.OnClick := ClickConfirm;
@@ -396,7 +399,7 @@ begin
 
   FOwner := AOwner;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -424,6 +427,7 @@ begin
   box.Align := TAlignLayout.Center;
   box.Width := 800;
   box.Height := 400;
+  TResponsiveDialogRoot(FRoot).FitPanel(box);
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
@@ -447,12 +451,10 @@ begin
   FMinutes.Parent := box;
   FMinutes.Align := TAlignLayout.Client;
   FMinutes.StyledSettings := [];
-  FMinutes.TextSettings.Font.Size := 22;
+  FMinutes.TextSettings.Font.Size := 96;
   FMinutes.TextSettings.Font.Style := [TFontStyle.fsBold];
   FMinutes.TextSettings.HorzAlign := TTextAlign.Center;
   FMinutes.TextSettings.VertAlign := TTextAlign.Center;
-  FMinutes.Scale.X := 10;
-  FMinutes.Scale.Y := 7;
 
 
   ImgSub := TImage.Create(box);
@@ -487,7 +489,7 @@ begin
   cancel := TButton.Create(footer);
   cancel.Parent := footer;
   cancel.Align := TAlignLayout.Left;
-  cancel.Width := 380;
+  cancel.Width := 340;
   cancel.Text := L(STR_CANCEL);
   cancel.Margins.Right := 40;
   cancel.OnClick := ClickCancel;
@@ -498,7 +500,7 @@ begin
   ok := TButton.Create(footer);
   ok.Parent := footer;
   ok.Align := TAlignLayout.Right;
-  ok.Width := 380;
+  ok.Width := 340;
   ok.Text := L(STR_OK_CONFIRM);
   ok.Margins.Left := 40;
   ok.OnClick := ClickConfirm;
@@ -609,7 +611,7 @@ var
 begin
   FOwner := AOwner;
 
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -627,6 +629,7 @@ begin
   box.Align := TAlignLayout.Center;
   box.Width := 800;
   box.Height := 260;
+  TResponsiveDialogRoot(FRoot).FitPanel(box);
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;
@@ -723,7 +726,7 @@ begin
   FOnSelected := AOnSelected;
 
   // ROOT overlay
-  FRoot := TLayout.Create(AOwner);
+  FRoot := TResponsiveDialogRoot.Create(AOwner);
   FRoot.Parent := AParent;
   FRoot.Align := TAlignLayout.Contents;
   FRoot.Visible := False;
@@ -743,6 +746,7 @@ begin
   box.Align := TAlignLayout.Center;
   box.Width := 900;
   box.Height := 300;
+  TResponsiveDialogRoot(FRoot).FitPanel(box);
   box.XRadius := 20;
   box.YRadius := 20;
   box.Fill.Color := $FFFFFFFF;

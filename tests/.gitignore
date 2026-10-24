@@ -1,0 +1,6 @@
+/build/
+/preview-data/
+/preview-status.txt
+*.exe
+*.dcu
+
